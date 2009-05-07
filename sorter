@@ -4,6 +4,8 @@ use strict;
 use lib '.';
 use cfg;
 
+use File::Copy;
+
 open (ORDER, '<'.$cfg::items_dir.'/order');
 my @order = ();
 while (my $line1 = <ORDER>) {
@@ -17,14 +19,44 @@ close(ORDER);
 
 @order = sort { $a->[0] <=> $b->[0] } @order;
 
-open(OUTPUT, '>lenta.html');
+my $part = 1;
+
+open(OUTPUT, '>lenta'.$part.'.html');
+my $item = 0;
+my @piece_of_lenta = ();
+
 for my $f (@order) {
     warn (":", $f->[1], "\n");
     open(FILE, '<'.$cfg::items_dir.'/'.$f->[1]);
-    while(my $line = <FILE>) {
-        print OUTPUT $line;
-    }
+	my $chunk = join('', <FILE>);
     close FILE;
-#    unlink($f->[0]);
+	unshift @piece_of_lenta, $chunk;
+	$item ++;
+
+	if ($item > $cfg::maxitems) {
+		print OUTPUT @piece_of_lenta;
+		print OUTPUT prev_part($part), '&nbsp;&nbsp;',  next_part($part);
+		close OUTPUT;
+		$part ++;
+		open(OUTPUT, '>lenta'.$part.'.html');
+		$item=0;
+		@piece_of_lenta = ();
+	}
 }
+print OUTPUT prev_part($part);
 close OUTPUT;
+
+copy('lenta'.$part.'.html', 'lenta.html');
+
+sub prev_part {
+	my $part = shift;
+
+	$part > 1 
+		?  q{<a href="lenta}.($part - 1).q{.html">&lt;&lt;Prev</a>}
+		: '';
+}
+
+sub next_part {
+	my $part = shift;
+	q{<a href="lenta}.($part + 1).q{.html">Next&gt;&gt;</a>};
+}

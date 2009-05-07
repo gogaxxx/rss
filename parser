@@ -75,6 +75,8 @@ MAIN: {
                 for my $item (@{$feed->{items}}) {
                     my $link = $item->{permaLink} || $item->{'link'};
 					my $guid = $item->{guid} || $link;
+					
+					$guid =~ s/\s/_/go;
 
                     my $date = $item->{pubDate} || $item->{dc}{date};
 
@@ -86,10 +88,10 @@ MAIN: {
                                     body    => 
                                         $item->{content}{encoded}
                                         || $item->{description},
+									guid    => $guid,
                                     link    => $link || $guid
                                   }
                                  );
-                        write_master($guid);
                         $guids{$guid} = 1;
                     }
                 }
@@ -128,11 +130,12 @@ MAIN: {
                     else {
                         $link = '';
                     }
-                    my $id = $item->id || $link;
+                    my $guid = $item->id || $link;
+					$guid =~ s/\s/_/go;
 
                     my $content = $item->content;
 
-                    unless ($guids{$id} eq 1) {
+                    unless ($guids{$guid} eq 1) {
                         my $body;
 
                         if ($content) {
@@ -146,11 +149,11 @@ MAIN: {
                                     subject => $item->title,
                                     date    => $item->updated,
                                     body    => $body,
+									guid    => $guid,
                                     link    => $link,
                                   }
                                  );
-                        write_master($id);
-                        $guids{$id} = 1;
+                        $guids{$guid} = 1;
                     }
                 }
             }
@@ -191,7 +194,7 @@ sub send_mail {
     close OUT;
 
     open(OUT, '>>'.$cfg::items_dir.'/order');
-    print OUT ($time, " ", $item_name, "\n");
+    print OUT ($time, " ", $item_name, ' ', $item->{guid}, "\n");
     close OUT;
 
     save_id($item_name);
@@ -229,28 +232,31 @@ sub save_id {
 sub check_and_create_db {
     my $need_remake = 0;
     my $db_filename = $cfg::guiddatabase.'.db';
-    if (-e $cfg::guidmaster 
+
+	my $guidmaster = $cfg::items_dir.'/order';
+
+    if (-e $guidmaster 
             and
         !-e $db_filename) 
     {
         # отсутствует db файл - просто пересобрать из мастера
         $need_remake = 1;
     }
-    elsif (!-e $cfg::guidmaster) {
+    elsif (!-e $guidmaster) {
         # отсутствует мастер - db недействителен!
         # создаём пустой мастер и пустой db
-        open(MASTER, '>'.$cfg::guidmaster);
+        open(MASTER, '>'.$guidmaster);
         close MASTER;
         unlink($db_filename);
         $need_remake = 1;
     }
-    elsif (-e $cfg::guidmaster 
+    elsif (-e $guidmaster 
             and
            -e $db_filename)
     {
         # оба файла существуют - хорошо!
         # проверим, если мастер обновлён позже db - пересобрать
-        my @master_stat = stat($cfg::guidmaster);
+        my @master_stat = stat($guidmaster);
         my @db_stat     = stat($db_filename);
 
         if ($master_stat[9] > $db_stat[9]) {
@@ -263,27 +269,15 @@ sub check_and_create_db {
         my %guids;
         tie %guids, 'NDBM_File', $cfg::guiddatabase, O_CREAT|O_RDWR, 0666;
 
-        if (open(MASTER, '<'.$cfg::guidmaster)) {
+        if (open(MASTER, '<'.$guidmaster)) {
             while (my $line = <MASTER>) {
                 chomp $line;
-                $guids{$line} = 1;
+				my @parts = split(/\s+/o, $line);
+                $guids{$parts[2]} = 1;
             }
             close FILE;
         }
 
         untie %guids;
-    }
-}
-
-### write_master ####+++1
-sub write_master {
-    my $guid = shift;
-    if(open(MASTER, '>>'.$cfg::guidmaster)) {
-        print MASTER $guid, "\n";
-        close MASTER;
-    }
-    else {
-        warn ("ERROR: Can't open $cfg::guidmaster: $!\n");
-        warn ("WARNING: guid data will be lost!\n");
     }
 }

@@ -1,0 +1,30 @@
+#!/usr/bin/perl
+
+use strict;
+use lib '.';
+use cfg;
+
+open (ORDER, '<'.$cfg::items_dir.'/order');
+my @order = ();
+while (my $line1 = <ORDER>) {
+
+    chomp $line1;
+    my @fields = split(/\s+/o, $line1);
+
+    push @order, [ @fields ];
+}
+close(ORDER);
+
+@order = sort { $a->[0] <=> $b->[0] } @order;
+
+open(OUTPUT, '>lenta.html');
+for my $f (@order) {
+    warn (":", $f->[1], "\n");
+    open(FILE, '<'.$cfg::items_dir.'/'.$f->[1]);
+    while(my $line = <FILE>) {
+        print OUTPUT $line;
+    }
+    close FILE;
+#    unlink($f->[0]);
+}
+close OUTPUT;

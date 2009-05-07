@@ -1,0 +1,289 @@
+#!/usr/bin/perl
+#
+# Copyright (c) 2005 George 'Nephrite' Potapov <nephrite@inbox.ru>
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+# $Id: rss2mail 10 2008-01-08 22:34:16Z nephrite $
+#
+
+use strict;
+
+use lib '.';
+use cfg;
+
+use utf8;
+
+use Date::Parse;
+use Encode;
+use Fcntl;
+use NDBM_File;
+
+use XML::Atom::Feed;
+use XML::RSS;
+use XML::Detector;
+
+MAIN: {
+    $| = 1;
+
+    check_and_create_db();
+
+    my %guids;
+    tie %guids, 'NDBM_File', $cfg::guiddatabase, O_CREAT|O_RDWR, 0666;
+    for my $file (@ARGV) {
+        my $content;
+
+        unless (open(FILE, '<'.$file)) {
+            warn "Can't open $file: $!\n";
+            next;
+        }
+        $content = join('', <FILE>);
+        close(FILE);
+
+        my $detector = XML::Detector->new();
+
+        if ($content) {
+			my $ctype = $detector->detect($content);
+
+            if ($ctype eq 'rss') {
+                my $feed = XML::RSS->new();
+
+                eval {
+                    $feed->parse($content);
+                };
+                if ($@) {
+                    warn "ERROR: $@\n";
+                    untie %guids;
+                    next;
+                }
+                for my $item (@{$feed->{items}}) {
+                    my $link = $item->{permaLink} || $item->{'link'};
+					my $guid = $item->{guid} || $link;
+
+                    my $date = $item->{pubDate} || $item->{dc}{date};
+
+                    unless ($guids{$guid} eq 1) {
+                        send_mail($feed->{channel}{title},
+                                  {
+                                    subject => $item->{title},
+                                    date    => $date,
+                                    body    => 
+                                        $item->{content}{encoded}
+                                        || $item->{description},
+                                    link    => $link || $guid
+                                  }
+                                 );
+                        write_master($guid);
+                        $guids{$guid} = 1;
+                    }
+                }
+            }
+            elsif ($ctype eq 'atom') {
+                my $feed;
+
+                eval {
+                    $feed = XML::Atom::Feed->new(\$content);
+                };
+                if ($@) {
+                    warn "ERROR: $@\n";
+                    untie %guids;
+                    next;
+                }
+
+                for my $item ($feed->entries) {
+                    my @links = $item->link;
+                    my $link;
+                    if (@links > 1) {
+                        for my $l (@links) {
+                            if ($l->rel eq 'alternate') {
+                                $link = $l;
+                                last;
+                            }
+                        }
+                        if (!ref($link) 
+                            || $link->rel ne 'alternate') {
+                            $link = $links[0];
+                        }
+                        $link = $link->href;
+                    }
+                    elsif (@links == 1) {
+                        $link = $links[0]->href;
+                    }
+                    else {
+                        $link = '';
+                    }
+                    my $id = $item->id || $link;
+
+                    my $content = $item->content;
+
+                    unless ($guids{$id} eq 1) {
+                        my $body;
+
+                        if ($content) {
+                            $body = $content->body;
+                        }
+                        else {
+                            $body = $item->summary
+                        }
+                        send_mail($feed->title,
+                                  {
+                                    subject => $item->title,
+                                    date    => $item->updated,
+                                    body    => $body,
+                                    link    => $link,
+                                  }
+                                 );
+                        write_master($id);
+                        $guids{$id} = 1;
+                    }
+                }
+            }
+
+        }
+    }
+    untie %guids;
+}
+
+### send_mail ####+++1
+sub send_mail {
+    my ($channel_title, $item)=@_;
+
+    $item->{date} ||= scalar(localtime());
+    my $time = str2time($item->{date});
+
+    Encode::_utf8_off($item->{subject});
+    Encode::_utf8_off($item->{body});
+
+    my $item_name = get_saved_id();
+
+    # ljro shit # XXX dirty hack
+    $item->{body} =~ s/<\/?font[^>]*>//g;
+
+    open (OUT, '>' . $cfg::items_dir . '/'. $item_name);
+    my $show_link = substr($item->{link}, 0, 40);
+    if (length($show_link) < length($item->{link})) {
+            $show_link .= '...';
+    }
+    print OUT ('<h1>', $item->{subject},
+                '</h1><a href="', 
+                $item->{link},
+                '" target=_blank>[link: ', $show_link, ']</a>');
+    print OUT ('<span class="date">',
+                $item->{date},
+                '</span><div class="body">');
+    print OUT ($item->{body}, '</div><br clear=all><hr>');
+    close OUT;
+
+    open(OUT, '>>'.$cfg::items_dir.'/order');
+    print OUT ($time, " ", $item_name, "\n");
+    close OUT;
+
+    save_id($item_name);
+    print($item_name, ' ');
+}
+
+sub get_saved_id {
+    if (open(IN, '<'.$cfg::items_dir.'/number')) {
+        my $id = <IN>;
+        close IN;
+
+        while (-e $cfg::items_dir.'/'.$id) {
+            $id++;
+        }
+        return $id || 0; 
+    }
+    else {
+        return 0;
+    }
+}
+
+sub save_id {
+    my $id = shift;
+
+    if (open(OUT, '>'.$cfg::items_dir.'/number')) {
+        print OUT $id;
+        close OUT;
+    }
+}
+
+# check_and_create_db #+++1
+#
+# проверить, существует ли guids.db и собрать его из мастер файла
+#
+sub check_and_create_db {
+    my $need_remake = 0;
+    my $db_filename = $cfg::guiddatabase.'.db';
+    if (-e $cfg::guidmaster 
+            and
+        !-e $db_filename) 
+    {
+        # отсутствует db файл - просто пересобрать из мастера
+        $need_remake = 1;
+    }
+    elsif (!-e $cfg::guidmaster) {
+        # отсутствует мастер - db недействителен!
+        # создаём пустой мастер и пустой db
+        open(MASTER, '>'.$cfg::guidmaster);
+        close MASTER;
+        unlink($db_filename);
+        $need_remake = 1;
+    }
+    elsif (-e $cfg::guidmaster 
+            and
+           -e $db_filename)
+    {
+        # оба файла существуют - хорошо!
+        # проверим, если мастер обновлён позже db - пересобрать
+        my @master_stat = stat($cfg::guidmaster);
+        my @db_stat     = stat($db_filename);
+
+        if ($master_stat[9] > $db_stat[9]) {
+            $need_remake = 1;
+        }
+    }
+
+    if ($need_remake) {
+        warn "Rebuilding database...\n";
+        my %guids;
+        tie %guids, 'NDBM_File', $cfg::guiddatabase, O_CREAT|O_RDWR, 0666;
+
+        if (open(MASTER, '<'.$cfg::guidmaster)) {
+            while (my $line = <MASTER>) {
+                chomp $line;
+                $guids{$line} = 1;
+            }
+            close FILE;
+        }
+
+        untie %guids;
+    }
+}
+
+### write_master ####+++1
+sub write_master {
+    my $guid = shift;
+    if(open(MASTER, '>>'.$cfg::guidmaster)) {
+        print MASTER $guid, "\n";
+        close MASTER;
+    }
+    else {
+        warn ("ERROR: Can't open $cfg::guidmaster: $!\n");
+        warn ("WARNING: guid data will be lost!\n");
+    }
+}

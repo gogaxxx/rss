@@ -34,6 +34,7 @@ use Date::Parse;
 use Encode;
 use Fcntl;
 use NDBM_File;
+use POSIX qw(strftime);
 
 use XML::Atom::Feed;
 use XML::RSS;
@@ -167,8 +168,10 @@ MAIN: {
 sub send_mail {
     my ($channel_title, $item)=@_;
 
-    $item->{date} ||= scalar(localtime());
-    my $time = str2time($item->{date});
+    my $time = 
+		$item->{date}
+			?  str2time($item->{date})
+			:  time();
 
     Encode::_utf8_off($item->{subject});
     Encode::_utf8_off($item->{body});
@@ -188,7 +191,7 @@ sub send_mail {
                 $item->{link},
                 '" target=_blank>[link: ', $show_link, ']</a>');
     print OUT ('<span class="date">',
-                $item->{date},
+                strftime($cfg::date_format, localtime($time)),
                 '</span><div class="body">');
     print OUT ($item->{body}, '</div><br clear=all><hr>');
     close OUT;

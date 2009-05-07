@@ -1,22 +1,17 @@
 #!/bin/sh
 
-ROOT=/home/nephrite/work/rss2mail-home
-
-rm $ROOT/items/*
+ROOT=/home/nephrite/rss
 
 cd $ROOT/feeds
-wget --user-agent='Mozilla' -t 3 -T 10 -N -x -i $ROOT/list
+wget --user-agent='Mozilla' -t 3 -T 20 -N -x -i $ROOT/list
 cd $ROOT
 
-for i in `find $ROOT/feeds -type f`
+for i in `find $ROOT/feeds -type f -newer last_run`
 do
     echo ...
     echo -n $i ' '
     $ROOT/parser $i
 done
+touch last_run
 
 $ROOT/sorter
-ci -l -m'.' $ROOT/lenta.html
-
-#curl -T $ROOT/lenta.html ftp://gogaxxx:OlakZirs@ftp.narod.ru/lenta.html
-scp $ROOT/lenta.html 10.2.19.3:

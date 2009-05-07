@@ -40,6 +40,11 @@ use XML::Atom::Feed;
 use XML::RSS;
 use XML::Detector;
 
+my @where = (
+	$cfg::items_dir.'/order',
+	$cfg::items_dir.'/new'
+);
+
 MAIN: {
     $| = 1;
 
@@ -168,7 +173,7 @@ MAIN: {
 sub send_mail {
     my ($channel_title, $item)=@_;
 
-    my $time = 
+    $item->{'time'} = 
 		$item->{date}
 			?  str2time($item->{date})
 			:  time();
@@ -176,12 +181,12 @@ sub send_mail {
     Encode::_utf8_off($item->{subject});
     Encode::_utf8_off($item->{body});
 
-    my $item_name = get_saved_id();
+    $item->{'name'} = get_saved_id();
 
     # ljro shit # XXX dirty hack
     $item->{body} =~ s/<\/?font[^>]*>//g;
 
-    open (OUT, '>' . $cfg::items_dir . '/'. $item_name);
+    open (OUT, '>' . $cfg::items_dir . '/'. $item->{'name'});
     my $show_link = substr($item->{link}, 0, 40);
     if (length($show_link) < length($item->{link})) {
             $show_link .= '...';
@@ -191,17 +196,15 @@ sub send_mail {
                 $item->{link},
                 '" target=_blank>[link: ', $show_link, ']</a>');
     print OUT ('<span class="date">',
-                strftime($cfg::date_format, localtime($time)),
+                strftime($cfg::date_format, localtime($item->{'time'})),
                 '</span><div class="body">');
     print OUT ($item->{body}, '</div><br clear=all><hr>');
     close OUT;
 
-    open(OUT, '>>'.$cfg::items_dir.'/order');
-    print OUT ($time, " ", $item_name, ' ', $item->{guid}, "\n");
-    close OUT;
+	save_item_data($item);
 
-    save_id($item_name);
-    print($item_name, ' ');
+    save_id($item->{'name'});
+    print($item->{'name'}, ' ');
 }
 
 sub get_saved_id {
@@ -283,4 +286,17 @@ sub check_and_create_db {
 
         untie %guids;
     }
+}
+
+### save_item_data ####### #+++1
+sub save_item_data {
+	my $item=shift;
+
+	for my $f (@where) {
+		open (OUT, '>>'.$f);
+		print OUT $item->{'time'}, ' ', 
+                  $item->{'name'}, ' ',
+                  $item->{'guid'}, "\n";
+		close(OUT);
+	}
 }

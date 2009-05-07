@@ -6,6 +6,7 @@ cd $ROOT/feeds
 wget --user-agent='Mozilla' -t 3 -T 20 -N -x -i $ROOT/list
 cd $ROOT
 
+rm $ROOT/items/new
 for i in `find $ROOT/feeds -type f -newer last_run`
 do
     echo ...

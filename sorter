@@ -45,7 +45,7 @@ for my $p (@to_process) {
 
 		if ($item > $cfg::maxitems) {
 			print OUTPUT @piece_of_lenta;
-			print OUTPUT prev_part($part), '&nbsp;&nbsp;',  next_part($part);
+			print OUTPUT prev_part($p, $part), '&nbsp;&nbsp;',  next_part($p, $part);
 			close OUTPUT;
 			$part ++;
 			open(OUTPUT, '>'.sprintf($p->{'output_tmp'}, $part));
@@ -54,21 +54,23 @@ for my $p (@to_process) {
 		}
 	}
 	print OUTPUT @piece_of_lenta;
-	print OUTPUT prev_part($part);
+	print OUTPUT prev_part($p, $part);
 	close OUTPUT;
 
 	copy(sprintf($p->{'output_tmp'}, $part), $p->{'output_start'});
 }
 
 sub prev_part {
+	my $p = shift;
 	my $part = shift;
 
 	$part > 1 
-		?  q{<a href="lenta}.($part - 1).q{.html">&lt;&lt;Prev</a>}
+		? q{<a href="}.sprintf($p->{'output_tmp'}, $part-1).q{">&lt;&lt;Prev</a>}
 		: '';
 }
 
 sub next_part {
+	my $p = shift;
 	my $part = shift;
-	q{<a href="lenta}.($part + 1).q{.html">Next&gt;&gt;</a>};
+	 q{<a href="}.sprintf($p->{'output_tmp'}, $part+1).q{">Next&gt;&gt;</a>}
 }

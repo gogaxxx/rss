@@ -43,7 +43,7 @@ for my $p (@to_process) {
 		unshift @piece_of_lenta, $chunk;
 		$item ++;
 
-		if ($item > $cfg::maxitems) {
+		if ($item >= $cfg::maxitems) {
 			print OUTPUT @piece_of_lenta;
 			print OUTPUT prev_part($p, $part), '&nbsp;&nbsp;',  next_part($p, $part);
 			close OUTPUT;
@@ -53,8 +53,10 @@ for my $p (@to_process) {
 			@piece_of_lenta = ();
 		}
 	}
-	print OUTPUT @piece_of_lenta;
-	print OUTPUT prev_part($p, $part);
+	if ($item > 0) {
+		print OUTPUT @piece_of_lenta;
+		print OUTPUT prev_part($p, $part);
+	}
 	close OUTPUT;
 
 	copy(sprintf($p->{'output_tmp'}, $part), $p->{'output_start'});

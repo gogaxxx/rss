@@ -29,9 +29,7 @@ for my $p (@to_process) {
 
 	@order = sort { $a->[0] <=> $b->[0] } @order;
 
-	my $part = 1;
-
-	open(OUTPUT, '>'.sprintf($p->{'output_tmp'}, $part));
+	my $part = 0;
 	my $item = 0;
 	my @piece_of_lenta = ();
 
@@ -44,20 +42,25 @@ for my $p (@to_process) {
 		$item ++;
 
 		if ($item >= $cfg::maxitems) {
-			print OUTPUT @piece_of_lenta;
-			print OUTPUT prev_part($p, $part), '&nbsp;&nbsp;',  next_part($p, $part);
-			close OUTPUT;
 			$part ++;
-			open(OUTPUT, '>'.sprintf($p->{'output_tmp'}, $part));
+            open(OUTPUT, '>'.sprintf($p->{'output_tmp'}, $part));
+			print OUTPUT @piece_of_lenta;
+			print OUTPUT prev_part($p, $part), 
+                         '&nbsp;&nbsp;',
+                         next_part($p, $part);
+			close OUTPUT;
+
 			$item=0;
 			@piece_of_lenta = ();
 		}
 	}
 	if ($item > 0) {
+        $part ++;
+        open(OUTPUT, '>'.sprintf($p->{'output_tmp'}, $part));
 		print OUTPUT @piece_of_lenta;
 		print OUTPUT prev_part($p, $part);
+        close OUTPUT;
 	}
-	close OUTPUT;
 
 	copy(sprintf($p->{'output_tmp'}, $part), $p->{'output_start'});
 }

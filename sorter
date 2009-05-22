@@ -33,8 +33,11 @@ for my $p (@to_process) {
 	my $item = 0;
 	my @piece_of_lenta = ();
 
-	for my $f (@order) {
+	my $l = scalar(@order);
+	for (my $i = 0; $i < $l; $i++) {
 	#    print (":", $f->[1], " - ", $part, "\n");
+		my $f = $order[$i];
+
 		open(FILE, '<'.$cfg::items_dir.'/'.$f->[1]);
 		my $chunk = join('', <FILE>);
 		close FILE;
@@ -47,7 +50,9 @@ for my $p (@to_process) {
 			print OUTPUT @piece_of_lenta;
 			print OUTPUT prev_part($p, $part), 
                          '&nbsp;&nbsp;',
-                         next_part($p, $part);
+                         ($i < $l-1 
+						 	? next_part($p, $part) 
+							: '');
 			close OUTPUT;
 
 			$item=0;

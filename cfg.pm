@@ -18,4 +18,13 @@ $guiddatabase = "$root/guids";
 $maxitems = 20;
 $date_format = '%a, %Y-%m-%d %H:%M:%S';
 
+%to_process = (
+	lenta => { 'input'      => $cfg::items_dir.'/order',
+	'output_tmp'   => $cfg::out_dir.'/lenta%d.html',
+	'output_start' => $cfg::out_dir.'/lenta.html'},
+	news => { 'input'      => $cfg::items_dir.'/new',
+	'output_tmp'   => $cfg::out_dir.'/new%d.html',
+	'output_start' => $cfg::out_dir.'/new.html' },
+);
+
 1;

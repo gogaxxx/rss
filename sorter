@@ -6,16 +6,11 @@ use cfg;
 
 use File::Copy;
 
-my @to_process = (
-	{ 'input'      => $cfg::items_dir.'/order',
-	'output_tmp'   => $cfg::out_dir.'/lenta%d.html',
-	'output_start' => $cfg::out_dir.'/lenta.html'},
-	{ 'input'      => $cfg::items_dir.'/new',
-	'output_tmp'   => $cfg::out_dir.'/new%d.html',
-	'output_start' => $cfg::out_dir.'/new.html' },
-);
+my @to_process = @ARGV;
 
-for my $p (@to_process) {
+for my $pindex (@to_process) {
+	my $p = $cfg::to_process{$pindex};
+
 	open (ORDER, '<'.$p->{'input'});
 	my @order = ();
 	while (my $line1 = <ORDER>) {

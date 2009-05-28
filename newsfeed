@@ -15,4 +15,4 @@ do
 done
 touch last_run
 
-$ROOT/sorter
+$ROOT/sorter news

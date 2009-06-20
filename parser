@@ -32,7 +32,7 @@ use utf8;
 
 use Date::Parse;
 use Encode;
-use Fcntl;
+use Fcntl qw(:DEFAULT :flock :seek);
 use NDBM_File;
 use POSIX qw(strftime);
 
@@ -289,14 +289,20 @@ sub check_and_create_db {
 }
 
 ### save_item_data ####### #+++1
+#
+# write one item data to index file
+#
 sub save_item_data {
 	my $item=shift;
 
 	for my $f (@where) {
 		open (OUT, '>>'.$f);
-		print OUT $item->{'time'}, ' ', 
+        flock(OUT, LOCK_EX) or die("Can't flock: $!");
+        seek(OUT, 0, SEEK_END) or die("Can't seek: $!");
+        print OUT $item->{'time'}, ' ', 
                   $item->{'name'}, ' ',
                   $item->{'guid'}, "\n";
+        flock(OUT, LOCK_UN) or die("Can't unlock: $!");
 		close(OUT);
 	}
 }

@@ -39,6 +39,14 @@ $guiddatabase = "$root/guids";
 $maxitems = 20;
 
 #
+# sorting - articles' sorting method. Two possible values 'old_first' -
+#           older articles go first, the natural chronologic order.
+#           new_first - newer articles go first, reverse chronologic
+#           order, often used in blogs. This is the default.
+#
+$sorting = 'new_first';
+
+#
 # date_format - in this format dates are printed near articles' headers.
 #               See strftime(3) for details
 #
@@ -54,19 +62,18 @@ $date_format = '%a, %Y-%m-%d %H:%M:%S';
 #         files: "order" - all the articles ever seen, and "new" -
 #         articles seen the most recent run
 #
+# maxitems - local maxitems
+#
 # output_tmp - templates for compiled html files' names in sprintf
 #              format. One numeric parameter allowed: serial number of file
-#
-# sorting - articles' sorting method. Two possible values 'old_first' -
-#           older articles go first, the natural chronologic order.
-#           new_first - newer articles go first, reverse chronologic
-#           order, often used in blogs. This is the default.
 #
 # output_start - first file the user will point her browser at. It is a
 #                copy of one of output_tmp files and depend on sorting
 #                parameter. If sorting is 'old_first' then output_start
 #                will point to the first (the oldest) file, else it will
 #                point to the last (the newest) file
+#
+# sorting - local sorting method, see global sorting variable.
 #
 %to_process = (
 	lenta => { 'input'      => $cfg::items_dir.'/order',

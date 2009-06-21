@@ -15,7 +15,8 @@ for my $pindex (@to_process) {
         die("No configuration for '$pindex' in cfg\n");
     }
 
-    $p->{'sorting'} ||= 'new_first';
+    $p->{'sorting'}  ||= $cfg::sorting;
+    $p->{'maxitems'} ||= $cfg::maxitems;
 
 	open (ORDER, '<'.$p->{'input'});
 	my @order = ();
@@ -50,7 +51,7 @@ for my $pindex (@to_process) {
         }
 		$item ++;
 
-		if ($item >= $cfg::maxitems) {
+		if ($item >= $p->{'maxitems'}) {
 			$part ++;
             open(OUTPUT, '>'.sprintf($p->{'output_tmp'}, $part));
 			print OUTPUT @piece_of_lenta;

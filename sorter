@@ -11,6 +11,12 @@ my @to_process = @ARGV;
 for my $pindex (@to_process) {
 	my $p = $cfg::to_process{$pindex};
 
+    unless (defined($p)) {
+        die("No configuration for '$pindex' in cfg\n");
+    }
+
+    $p->{'sorting'} ||= 'new_first';
+
 	open (ORDER, '<'.$p->{'input'});
 	my @order = ();
 	while (my $line1 = <ORDER>) {
@@ -36,7 +42,12 @@ for my $pindex (@to_process) {
 		open(FILE, '<'.$cfg::items_dir.'/'.$f->[1]);
 		my $chunk = join('', <FILE>);
 		close FILE;
-		unshift @piece_of_lenta, $chunk;
+        if ($p->{'sorting'} eq 'new_first') {
+		    unshift @piece_of_lenta, $chunk;
+        }
+        elsif ($p->{'sorting'} eq 'old_first') {
+            push @piece_of_lenta, $chunk;
+        }
 		$item ++;
 
 		if ($item >= $cfg::maxitems) {
@@ -62,7 +73,15 @@ for my $pindex (@to_process) {
         close OUTPUT;
 	}
 
-	copy(sprintf($p->{'output_tmp'}, $part), $p->{'output_start'});
+    my $filename = 
+        $p->{'sorting'} eq 'new_first'
+            ? sprintf($p->{'output_tmp'}, $part)
+            : 
+        $p->{'sorting'} eq 'old_first'
+            ? sprintf($p->{'output_tmp'}, 1)
+            : '';
+
+	copy($filename, $p->{'output_start'});
 }
 
 sub prev_part {
@@ -70,12 +89,12 @@ sub prev_part {
 	my $part = shift;
 
 	$part > 1 
-		? q{<a href="}.sprintf($p->{'output_tmp'}, $part-1).q{">&lt;&lt;Prev</a>}
+		? q{<a href="}.sprintf($p->{'output_tmp'}, $part-1).q{">&lt;&lt;Older</a>}
 		: '';
 }
 
 sub next_part {
 	my $p = shift;
 	my $part = shift;
-	 q{<a href="}.sprintf($p->{'output_tmp'}, $part+1).q{">Next&gt;&gt;</a>}
+	 q{<a href="}.sprintf($p->{'output_tmp'}, $part+1).q{">Newer&gt;&gt;</a>}
 }

@@ -1,0 +1,58 @@
+#!/usr/bin/perl
+#
+# detect an RSS or Atom feed on web page
+#
+
+use strict;
+use warnings;
+
+use LWP::UserAgent;
+use HTML::Parser;
+
+MAIN: {
+	my $url = $ARGV[0];
+
+	unless (defined($url) && $url ne '') {
+		die("Specify an URL\n");
+	}
+
+	my $ua = LWP::UserAgent->new();
+
+	my $response = $ua->get($url);
+
+	if ($response->is_success) {
+		my $content = $response->decoded_content;
+		print "$url :\n";
+
+		my $parser = HTML::Parser->new(
+			start_h => [ \&start_tag, "self,tagname,attr"]
+		);
+		$parser->{'rss_detected'} = 0;
+
+		$parser->parse($content);
+
+		unless ($parser->{'rss_detected'}) {
+			print "No feeds on this page";
+		}
+	}
+	else {
+		die("Can't fetch \"$url\": ", $response->status_line,"\n");
+	}
+}
+
+sub start_tag {
+	my ($parser, $tag_name, $tag_attrs)=@_;
+
+	$tag_name = lc($tag_name);
+	if ($tag_name eq 'link'
+		&& $tag_attrs->{'rel'} eq 'alternate') 
+	{
+		unless ($parser->{'rss_detected'}) {
+			print "\tURL\t\tType\n";
+			print "\t-----------------------------------\n";
+		}
+		print "\t", $tag_attrs->{'href'}, "\t\t", $tag_attrs->{'type'}, "\n";
+
+		$parser->{'rss_detected'} = 1;
+	}
+}

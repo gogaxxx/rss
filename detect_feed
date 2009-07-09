@@ -32,8 +32,9 @@ MAIN: {
 		$parser->parse($content);
 
 		unless ($parser->{'rss_detected'}) {
-			print "No feeds on this page";
+			print "\tNo feeds on this page\n";
 		}
+		print "\n";
 	}
 	else {
 		die("Can't fetch \"$url\": ", $response->status_line,"\n");

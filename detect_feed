@@ -17,6 +17,7 @@ MAIN: {
 	}
 
 	my $ua = LWP::UserAgent->new();
+	$ua->env_proxy;
 
 	my $response = $ua->get($url);
 

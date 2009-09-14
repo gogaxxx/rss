@@ -53,13 +53,18 @@ for my $pindex (@to_process) {
 
 		if ($item >= $p->{'maxitems'}) {
 			$part ++;
+
+			my $prev_links = prev_part($p, $part);
+			my $next_links = ($i < $l-1 
+						 		? next_part($p, $part) 
+								: ['','']);
+
             open(OUTPUT, '>'.sprintf($p->{'output_tmp'}, $part));
+			print OUTPUT header($prev_links, $next_links);
 			print OUTPUT @piece_of_lenta;
-			print OUTPUT prev_part($p, $part), 
+			print OUTPUT $prev_links->[1],
                          '&nbsp;&nbsp;',
-                         ($i < $l-1 
-						 	? next_part($p, $part) 
-							: '');
+						 $next_links->[1];
 			close OUTPUT;
 
 			$item=0;
@@ -68,9 +73,11 @@ for my $pindex (@to_process) {
 	}
 	if ($item > 0) {
         $part ++;
+		my $prev_links = prev_part($p, $part);
         open(OUTPUT, '>'.sprintf($p->{'output_tmp'}, $part));
+		print OUTPUT header($prev_links);
 		print OUTPUT @piece_of_lenta;
-		print OUTPUT prev_part($p, $part);
+		print OUTPUT $prev_links->[1];
         close OUTPUT;
 	}
 
@@ -89,13 +96,33 @@ sub prev_part {
 	my $p = shift;
 	my $part = shift;
 
-	$part > 1 
-		? q{<a href="}.sprintf($p->{'output_tmp'}, $part-1).q{">&lt;&lt;Older</a>}
-		: '';
+	if ($part > 1) {
+		my $href = sprintf($p->{'output_tmp'}, $part-1);
+		return 
+			[
+				q{<link rel="prev" href="}.$href.'">',
+				q{<a href="}.$href.q{">&lt;&lt;Older</a>}
+			]
+	}
+	else {
+		return [ '', ''];
+	}
 }
 
 sub next_part {
 	my $p = shift;
 	my $part = shift;
-	 q{<a href="}.sprintf($p->{'output_tmp'}, $part+1).q{">Newer&gt;&gt;</a>}
+
+	my $href = sprintf($p->{'output_tmp'}, $part+1);
+	return
+		[
+			q{<link rel="next" href="}.$href.'">',
+	 		q{<a href="}.$href.q{">Newer&gt;&gt;</a>}
+		];
+}
+
+sub header {
+	return ('<head>', 
+			(map { $_->[0]} @_),
+			'</head>');
 }

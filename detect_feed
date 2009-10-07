@@ -16,7 +16,12 @@ MAIN: {
 		die("Specify an URL\n");
 	}
 
+	unless ($url =~ m{^http://}) {
+		$url = 'http://'.$url;
+	}
+
 	my $ua = LWP::UserAgent->new();
+#	print $ENV{HTTP_PROXY};
 	$ua->env_proxy;
 
 	my $response = $ua->get($url);

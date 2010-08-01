@@ -65,7 +65,14 @@ MAIN: {
         my $detector = XML::Detector->new();
 
         if ($content) {
-			my $ctype = $detector->detect($content);
+			my $ctype;
+			eval {
+				$ctype = $detector->detect($content);
+			};
+			if ($@) {
+				$ctype = 'error';
+			}
+
 
             if ($ctype eq 'rss') {
                 my $feed = XML::RSS->new();

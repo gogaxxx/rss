@@ -3,7 +3,7 @@
 ROOT=/home/nephrite/rss
 
 cd $ROOT/feeds
-#wget --user-agent='Mozilla' -t 3 -T 20 -N -x -i $ROOT/list
+wget --user-agent='Mozilla' -t 3 -T 20 -N -x -i $ROOT/list
 cd $ROOT
 
 rm -f $ROOT/items/new

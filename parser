@@ -192,9 +192,9 @@ sub send_mail {
             $show_link .= '...';
     }
     print OUT ('<h1>', $item->{subject},
-                '</h1><a href="', 
+                '</h1><a class="itemlink" href="', 
                 $item->{link},
-                '" target=_blank>[link: ', $show_link, ']</a>');
+                '" target=_blank>[link-='.$item->{name}.': ', $show_link, ']</a>');
     print OUT ('<span class="date">',
                 strftime($cfg::date_format, localtime($item->{'time'})),
                 '</span><div class="body">');

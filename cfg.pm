@@ -29,6 +29,11 @@ $items_dir = "$root/items";
 $out_dir   = "$root/read";
 
 #
+# style_dir - css styles for compiled html files
+#
+$style_dir = "$root/style";
+
+#
 # guiddatabase - in this NDBM file seen guids are stored
 #
 $guiddatabase = "$root/guids";
@@ -78,11 +83,13 @@ $date_format = '%a, %Y-%m-%d %H:%M:%S';
 %to_process = (
 	lenta => { 'input'      => $cfg::items_dir.'/order',
 	'output_tmp'   => $cfg::out_dir.'/lenta%d.html',
-	'output_start' => $cfg::out_dir.'/lenta.html'},
+	'output_start' => $cfg::out_dir.'/lenta.html',
+	style => $cfg::style_dir.'/lenta.css',},
 	news => { 'input'      => $cfg::items_dir.'/new',
 	'output_tmp'   => $cfg::out_dir.'/new%d.html',
 	'output_start' => $cfg::out_dir.'/new.html',
-    'sorting' => 'old_first'},
+    'sorting' => 'old_first',
+	style => $cfg::style_dir.'/news.css',},
 );
 
 1;

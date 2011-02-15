@@ -3,16 +3,26 @@
 ROOT=/home/nephrite/rss
 
 cd $ROOT/feeds
-wget --user-agent='Mozilla' -t 3 -T 20 -N -x -i $ROOT/list
+#wget --user-agent='Mozilla' -t 3 -T 20 -N -x -i $ROOT/list
 cd $ROOT
 
-rm $ROOT/items/new
-for i in `find $ROOT/feeds -type f -newer last_run`
-do
-    echo ...
-    echo -n $i ' '
-    $ROOT/parser $i
-done
+rm -f $ROOT/items/new
+if [ -e last_run ]; then
+	for i in `find $ROOT/feeds -type f -newer last_run`
+	do
+		echo ...
+		echo -n $i ' '
+		$ROOT/parser $i
+	done
+else
+	for i in `find $ROOT/feeds -type f`
+	do
+		echo ...
+		echo -n $i ' '
+		$ROOT/parser $i
+	done
+fi
+
 touch last_run
 
 $ROOT/sorter news

@@ -36,6 +36,12 @@ for my $pindex (@to_process) {
 	my @piece_of_lenta = ();
 
 	my $l = scalar(@order);
+
+	my $style_links =
+		[
+			'<link rel="stylesheet" type="text/css" href="'.$p->{style}.'">'
+		];
+
 	for (my $i = 0; $i < $l; $i++) {
 	#    print (":", $f->[1], " - ", $part, "\n");
 		my $f = $order[$i];
@@ -58,11 +64,6 @@ for my $pindex (@to_process) {
 			my $next_links = ($i < $l-1 
 						 		? next_part($p, $part) 
 								: ['','']);
-			my $style_links =
-				[
-					'<link rel="stylesheet" type="text/css" href="'.$p->{style}.'">'
-				];
-
             open(OUTPUT, '>'.sprintf($p->{'output_tmp'}, $part));
 			print OUTPUT '<html>';
 			print OUTPUT header($prev_links, $next_links, $style_links);
@@ -81,7 +82,7 @@ for my $pindex (@to_process) {
         $part ++;
 		my $prev_links = prev_part($p, $part);
         open(OUTPUT, '>'.sprintf($p->{'output_tmp'}, $part));
-		print OUTPUT header($prev_links);
+		print OUTPUT header($prev_links, $style_links);
 		print OUTPUT @piece_of_lenta;
 		print OUTPUT $prev_links->[1];
         close OUTPUT;

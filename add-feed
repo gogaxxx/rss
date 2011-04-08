@@ -1,0 +1,19 @@
+#!/bin/sh
+
+LINK=$1
+
+if [ 'x'$LINK = 'x' ]; then
+	echo Specify URL
+	exit
+fi
+
+if [ ! -e list ]; then
+	touch list
+fi
+
+echo $LINK >new-link
+sort -m list new-link >new-list
+mv new-list list
+rm new-link
+ci -l -m"Added $LINK" list
+	

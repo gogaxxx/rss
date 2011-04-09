@@ -188,10 +188,9 @@ sub send_mail {
     Encode::_utf8_off($item->{subject});
     Encode::_utf8_off($item->{body});
 
-    $item->{'name'} = get_saved_id();
+	transform_item($item);
 
-    # ljro shit # XXX dirty hack
-    $item->{body} =~ s/<\/?font[^>]*>//g;
+    $item->{'name'} = get_saved_id();
 
     open (OUT, '>' . $cfg::items_dir . '/'. $item->{'name'});
     my $show_link = substr($item->{link}, 0, 40);
@@ -213,6 +212,25 @@ sub send_mail {
     save_id($item->{'name'});
     print($item->{'name'}, ' ');
 }
+
+### transform_item  ####### #+++2
+#
+# transform item to something better
+#
+# TODO сделать plugin'ы для трансформации, а то эта функция грозит
+# разрастись
+#
+sub transform_item {
+	my $item = shift;
+	if ($item->{link} =~ /theregister\.com/o) {
+		# делать линк на печатную версию вместо обычной
+		$item->{link} .= '/print.html';
+	}
+	elsif ($item->{link} =~ /lj\.rossia\.org/o) {
+		# ljro shit # XXX dirty hack
+		$item->{body} =~ s/<\/?font[^>]*>//g;
+	}
+} #---2
 
 sub get_saved_id {
     if (open(IN, '<'.$cfg::items_dir.'/number')) {

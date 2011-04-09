@@ -46,16 +46,20 @@ for my $pindex (@to_process) {
 	#    print (":", $f->[1], " - ", $part, "\n");
 		my $f = $order[$i];
 
-		open(FILE, '<'.$cfg::items_dir.'/'.$f->[1]);
-		my $chunk = join('', <FILE>);
-		close FILE;
-        if ($p->{'sorting'} eq 'new_first') {
-		    unshift @piece_of_lenta, $chunk;
-        }
-        elsif ($p->{'sorting'} eq 'old_first') {
-            push @piece_of_lenta, $chunk;
-        }
-		$item ++;
+		my $item_file = $cfg::items_dir.'/'.$f->[1];
+		if (-r $item_file) {
+			open(FILE, '<'.$item_file);
+			my $chunk = join('', <FILE>);
+			close FILE;
+
+			if ($p->{'sorting'} eq 'new_first') {
+				unshift @piece_of_lenta, $chunk;
+			}
+			elsif ($p->{'sorting'} eq 'old_first') {
+				push @piece_of_lenta, $chunk;
+			}
+			$item ++;
+		}
 
 		if ($item >= $p->{'maxitems'}) {
 			$part ++;

@@ -33,7 +33,7 @@ use utf8;
 use Date::Parse;
 use Encode;
 use Fcntl qw(:DEFAULT :flock :seek);
-use NDBM_File;
+use AnyDBM_File;
 use POSIX qw(strftime);
 
 use XML::Atom::Feed;
@@ -51,7 +51,7 @@ MAIN: {
     check_and_create_db();
 
     my %guids;
-    tie %guids, 'NDBM_File', $cfg::guiddatabase, O_CREAT|O_RDWR, 0666;
+    tie %guids, 'AnyDBM_File', $cfg::guiddatabase, O_CREAT|O_RDWR, 0666;
     for my $file (@ARGV) {
         my $content;
 
@@ -262,7 +262,8 @@ sub save_id {
 #
 sub check_and_create_db {
     my $need_remake = 0;
-    my $db_filename = $cfg::guiddatabase.'.db';
+	#my $db_filename = $cfg::guiddatabase.'.db';
+    my $db_filename = $cfg::guiddatabase;
 
 	my $guidmaster = $cfg::items_dir.'/order';
 
@@ -298,7 +299,7 @@ sub check_and_create_db {
     if ($need_remake) {
         warn "Rebuilding database...\n";
         my %guids;
-        tie %guids, 'NDBM_File', $cfg::guiddatabase, O_CREAT|O_RDWR, 0666;
+        tie %guids, 'AnyDBM_File', $cfg::guiddatabase, O_CREAT|O_RDWR, 0666;
 
         if (open(MASTER, '<'.$guidmaster)) {
             while (my $line = <MASTER>) {

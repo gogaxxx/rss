@@ -273,7 +273,6 @@ sub idiot_tr_link {
 	my ($tagname, $href_name, $attr)=@_;
 
 	if ($attr->{$href_name} !~ m{^http://}o) {
-print Dumper($attr);
 		$attr->{$href_name} =
 			'http://www.idiottoys.com'.$attr->{$href_name};
 		return join(' ', '<'.$tagname,

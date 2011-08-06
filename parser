@@ -77,7 +77,7 @@ sub xml_start_detect {
                             Char  => \&common_char);
     }
     elsif ($elem eq 'rss'
-            || $elem eq 'rdf:rdf')
+            || lc($elem) eq 'rdf:rdf')
     {
         $expat->{type} = 'rss';
         print 'rss ';
@@ -168,14 +168,12 @@ sub rss_start {
     if ($elem eq 'item') {
         $expat->{item} = {};
     }
-    elsif ($elem eq 'link') {
-        $expat->{item}{link} = $attr{href};
-    }
     elsif ($elem eq 'guid'
             || $elem eq 'title'
             || $elem eq 'pubDate'
             || $elem eq 'date'
-            || $elem eq 'description')
+            || $elem eq 'description'
+			|| $elem eq 'link')
     {
         $expat->{curparam} = $elem;
         $expat->{item}{$expat->{curparam}} = '';
@@ -203,7 +201,8 @@ sub rss_end {
             || $elem eq 'title'
             || $elem eq 'pubDate'
             || $elem eq 'date'
-            || $elem eq 'description')
+            || $elem eq 'description'
+			|| $elem eq 'link')
     {
         if($expat->{curparam} ne $elem) {
             $expat->finish();

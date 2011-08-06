@@ -125,8 +125,7 @@ sub atom_end {
         my $item = $expat->{item};
         my $guid = $item->{id} || $item->{link};
             $guid =~ s/\s/_/go;
-        send_mail('channel title', 
-                    {
+        save_item( {
                         subject => $item->{title},
                         date    => $item->{updated} 
                                     || $item->{published},
@@ -188,8 +187,7 @@ sub rss_end {
         my $item = $expat->{item};
         my $guid = $item->{guid} || $item->{link};
             $guid =~ s/\s/_/go;
-        send_mail('channel title', 
-                    {
+        save_item( {
                         subject => $item->{title},
                         date    => $item->{pubDate},
                         body    => $item->{description},
@@ -213,9 +211,9 @@ sub rss_end {
     }
 }
 
-### send_mail ####+++1
-sub send_mail {
-    my ($channel_title, $item)=@_;
+### save_item ####+++1
+sub save_item {
+    my ($item)=@_;
 
     $item->{'time'} = 
 		$item->{date}

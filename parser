@@ -86,6 +86,7 @@ sub xml_start_detect {
                             Char  => \&common_char);
     }
     else {
+        print 'UNKNOWN TYPE ';
         $expat->finish();
     }
 }

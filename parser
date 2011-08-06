@@ -36,9 +36,7 @@ use Fcntl qw(:DEFAULT :flock :seek);
 use AnyDBM_File;
 use POSIX qw(strftime);
 
-use XML::Atom::Feed;
-use XML::RSS;
-use XML::Detector;
+use XML::Parser;
 
 my @where = (
 	$cfg::items_dir.'/order',
@@ -52,129 +50,167 @@ MAIN: {
 
     my %guids;
     tie %guids, 'AnyDBM_File', $cfg::guiddatabase, O_CREAT|O_RDWR, 0666;
-	my $detector = XML::Detector->new();
+
+    my $parser = XML::Parser->new();
 
     for my $file (@ARGV) {
-        my $content;
-        print "\n", $file;
+        print "\n", $file, ' ';
 
-        unless (open(FILE, '<'.$file)) {
-            warn "Can't open $file: $!\n";
-            next;
-        }
-        $content = join('', <FILE>);
-        close(FILE);
+        $parser->setHandlers(Start => \&xml_start_detect);
+        $parser->parsefile($file);
+    }
 
-        if ($content) {
-			my $ctype;
-			eval {
-				$ctype = $detector->detect($content);
-			};
-			if ($@) {
-				$ctype = 'error';
-			}
+    untie %guids;
+}
 
+#+++1 Handlers
+#+++2 xml_start_detect
+sub xml_start_detect {
+    my ($expat, $elem)=@_;
 
-            if ($ctype eq 'rss') {
-                my $feed = XML::RSS->new();
+    if ($elem eq 'feed') {
+        $expat->{type} = 'atom';
+        print 'atom ';
 
-                eval {
-                    $feed->parse($content);
-                };
-                if ($@) {
-                    warn "ERROR: $@\n";
-                    untie %guids;
-                    next;
-                }
-                for my $item (@{$feed->{items}}) {
-                    my $link = $item->{permaLink} || $item->{'link'};
-					my $guid = $item->{guid} || $link;
-					
-					$guid =~ s/\s/_/go;
+        $expat->setHandlers(Start => \&atom_start,
+                            End   => \&atom_end,
+                            Char  => \&common_char);
+    }
+    elsif ($elem eq 'rss'
+            || $elem eq 'rdf:rdf')
+    {
+        $expat->{type} = 'rss';
+        print 'rss ';
+        $expat->setHandlers(Start => \&rss_start,
+                            End   => \&rss_end,
+                            Char  => \&common_char);
+    }
+    else {
+        $expat->finish();
+    }
+}
 
-                    my $date = $item->{pubDate} || $item->{dc}{date};
+#+++2 atom_start
+sub atom_start {
+    my ($expat, $elem, %attr)=@_;
 
-                    unless ($guids{$guid} eq 1) {
-                        send_mail($feed->{channel}{title},
-                                  {
-                                    subject => $item->{title},
-                                    date    => $date,
-                                    body    => 
-                                        $item->{content}{encoded}
-                                        || $item->{description},
-									guid    => $guid,
-                                    link    => $link || $guid
-                                  }
-                                 );
-                        $guids{$guid} = 1;
-                    }
-                }
-            }
-            elsif ($ctype eq 'atom') {
-                my $feed;
-
-                eval {
-                    $feed = XML::Atom::Feed->new(\$content);
-                };
-                if ($@) {
-                    warn "ERROR: $@\n";
-                    untie %guids;
-                    next;
-                }
-
-                for my $item ($feed->entries) {
-                    my @links = $item->link;
-                    my $link;
-                    if (@links > 1) {
-                        for my $l (@links) {
-                            if ($l->rel eq 'alternate') {
-                                $link = $l;
-                                last;
-                            }
-                        }
-                        if (!ref($link) 
-                            || $link->rel ne 'alternate') {
-                            $link = $links[0];
-                        }
-                        $link = $link->href;
-                    }
-                    elsif (@links == 1) {
-                        $link = $links[0]->href;
-                    }
-                    else {
-                        $link = '';
-                    }
-                    my $guid = $item->id || $link;
-					$guid =~ s/\s/_/go;
-
-                    my $content = $item->content;
-
-                    unless ($guids{$guid} eq 1) {
-                        my $body;
-
-                        if ($content) {
-                            $body = $content->body;
-                        }
-                        else {
-                            $body = $item->summary
-                        }
-                        send_mail($feed->title,
-                                  {
-                                    subject => $item->title,
-                                    date    => $item->updated,
-                                    body    => $body,
-									guid    => $guid,
-                                    link    => $link,
-                                  }
-                                 );
-                        $guids{$guid} = 1;
-                    }
-                }
-            }
-
+    if ($elem eq 'entry') {
+        $expat->{item} = {};
+    }
+    elsif ($elem eq 'link') {
+        if ($attr{rel} eq 'alternate' 
+            || !defined $expat->{item}{link}) 
+        {
+            $expat->{item}{link} = $attr{href};
         }
     }
-    untie %guids;
+    elsif ($elem eq 'id'
+            || $elem eq 'title'
+            || $elem eq 'published'
+            || $elem eq 'updated'
+            || $elem eq 'content'
+            || $elem eq 'summary')
+    {
+        $expat->{curparam} = $elem;
+        $expat->{item}{$expat->{curparam}} = '';
+    }
+}
+
+#+++2 atom_end 
+sub atom_end {
+    my ($expat, $elem)=@_;
+
+    if ($elem eq 'entry') {
+        my $item = $expat->{item};
+        my $guid = $item->{id} || $item->{link};
+            $guid =~ s/\s/_/go;
+        send_mail('channel title', 
+                    {
+                        subject => $item->{title},
+                        date    => $item->{updated} 
+                                    || $item->{published},
+                        body    => $item->{content}
+                                    || $item->{summary},
+                        guid    => $guid,
+                        link    => $item->{link}
+                    });
+    }
+    elsif ($elem eq 'id'
+            || $elem eq 'title'
+            || $elem eq 'published'
+            || $elem eq 'updated'
+            || $elem eq 'content'
+            || $elem eq 'summary') 
+    {
+        if($expat->{curparam} ne $elem) {
+            $expat->finish();
+        }
+        else {
+            $expat->{curparam} = undef;
+        }
+    }
+}
+
+#+++2 common_char
+sub common_char {
+    my ($expat, $string)=@_;
+
+    if (defined $expat->{curparam}) {
+        $expat->{item}{$expat->{curparam}} .= $string;
+    }
+}
+
+#+++2 rss_start
+sub rss_start {
+    my ($expat, $elem, %attr)=@_;
+
+    if ($elem eq 'item') {
+        $expat->{item} = {};
+    }
+    elsif ($elem eq 'link') {
+        $expat->{item}{link} = $attr{href};
+    }
+    elsif ($elem eq 'guid'
+            || $elem eq 'title'
+            || $elem eq 'pubDate'
+            || $elem eq 'date'
+            || $elem eq 'description')
+    {
+        $expat->{curparam} = $elem;
+        $expat->{item}{$expat->{curparam}} = '';
+    }
+}
+
+#+++2 rss_end 
+sub rss_end {
+    my ($expat, $elem)=@_;
+
+    if ($elem eq 'item') {
+        my $item = $expat->{item};
+        my $guid = $item->{guid} || $item->{link};
+            $guid =~ s/\s/_/go;
+        send_mail('channel title', 
+                    {
+                        subject => $item->{title},
+                        date    => $item->{pubDate},
+                        body    => $item->{description},
+                        guid    => $guid,
+                        link    => $item->{link} || $guid
+                    });
+    }
+    elsif ($elem eq 'guid'
+            || $elem eq 'title'
+            || $elem eq 'pubDate'
+            || $elem eq 'date'
+            || $elem eq 'description')
+    {
+        if($expat->{curparam} ne $elem) {
+            $expat->finish();
+        }
+        else {
+            $expat->{curparam} = undef;
+        }
+    }
 }
 
 ### send_mail ####+++1

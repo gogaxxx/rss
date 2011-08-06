@@ -58,7 +58,10 @@ MAIN: {
 
         $parser->setHandlers(Start => \&xml_start_detect);
 		$parser->{guids} = \%guids;
-        $parser->parsefile($file);
+		eval {
+     	   $parser->parsefile($file);
+		};
+		warn "here";
     }
 
     untie %guids;
@@ -173,6 +176,7 @@ sub rss_start {
             || $elem eq 'pubDate'
             || $elem eq 'date'
             || $elem eq 'description'
+            || $elem eq 'content:encoded'
 			|| $elem eq 'link')
     {
         $expat->{curparam} = $elem;
@@ -191,7 +195,8 @@ sub rss_end {
         save_item( $expat->{guids}, {
                         subject => $item->{title},
                         date    => $item->{pubDate},
-                        body    => $item->{description},
+                        body    => $item->{'content:encoded'} 
+									|| $item->{description},
                         guid    => $guid,
                         link    => $item->{link} || $guid
                     });
@@ -201,6 +206,7 @@ sub rss_end {
             || $elem eq 'pubDate'
             || $elem eq 'date'
             || $elem eq 'description'
+            || $elem eq 'content:encoded'
 			|| $elem eq 'link')
     {
         if($expat->{curparam} ne $elem) {

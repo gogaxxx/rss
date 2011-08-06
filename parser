@@ -52,6 +52,8 @@ MAIN: {
 
     my %guids;
     tie %guids, 'AnyDBM_File', $cfg::guiddatabase, O_CREAT|O_RDWR, 0666;
+	my $detector = XML::Detector->new();
+
     for my $file (@ARGV) {
         my $content;
 
@@ -61,8 +63,6 @@ MAIN: {
         }
         $content = join('', <FILE>);
         close(FILE);
-
-        my $detector = XML::Detector->new();
 
         if ($content) {
 			my $ctype;

@@ -57,6 +57,7 @@ MAIN: {
         print "\n", $file, ' ';
 
         $parser->setHandlers(Start => \&xml_start_detect);
+		$parser->{guids} = \%guids;
         $parser->parsefile($file);
     }
 
@@ -125,7 +126,7 @@ sub atom_end {
         my $item = $expat->{item};
         my $guid = $item->{id} || $item->{link};
             $guid =~ s/\s/_/go;
-        save_item( {
+        save_item($expat->{guids}, {
                         subject => $item->{title},
                         date    => $item->{updated} 
                                     || $item->{published},
@@ -187,7 +188,7 @@ sub rss_end {
         my $item = $expat->{item};
         my $guid = $item->{guid} || $item->{link};
             $guid =~ s/\s/_/go;
-        save_item( {
+        save_item( $expat->{guids}, {
                         subject => $item->{title},
                         date    => $item->{pubDate},
                         body    => $item->{description},
@@ -213,7 +214,11 @@ sub rss_end {
 
 ### save_item ####+++1
 sub save_item {
-    my ($item)=@_;
+    my ($guids, $item)=@_;
+
+	return if ($guids->{$item->{guid}});
+
+	$guids->{$item->{guid}} = 1;
 
     $item->{'time'} = 
 		$item->{date}

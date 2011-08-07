@@ -175,6 +175,7 @@ sub rss_start {
             || $elem eq 'title'
             || $elem eq 'pubDate'
             || $elem eq 'date'
+            || $elem eq 'dc:date'
             || $elem eq 'description'
             || $elem eq 'content:encoded'
 			|| $elem eq 'link')
@@ -194,7 +195,8 @@ sub rss_end {
             $guid =~ s/\s/_/go;
         save_item( $expat->{guids}, {
                         subject => $item->{title},
-                        date    => $item->{pubDate},
+                        date    => $item->{pubDate} 
+									|| $item->{'dc:date'}, 
                         body    => $item->{'content:encoded'} 
 									|| $item->{description},
                         guid    => $guid,
@@ -205,6 +207,7 @@ sub rss_end {
             || $elem eq 'title'
             || $elem eq 'pubDate'
             || $elem eq 'date'
+            || $elem eq 'dc:date'
             || $elem eq 'description'
             || $elem eq 'content:encoded'
 			|| $elem eq 'link')

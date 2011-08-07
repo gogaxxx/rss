@@ -113,6 +113,7 @@ sub atom_start {
             || $elem eq 'title'
             || $elem eq 'published'
             || $elem eq 'updated'
+			|| $elem eq 'issued'
             || $elem eq 'content'
             || $elem eq 'summary')
     {
@@ -132,7 +133,8 @@ sub atom_end {
         save_item($expat->{guids}, {
                         subject => $item->{title},
                         date    => $item->{updated} 
-                                    || $item->{published},
+                                    || $item->{published}
+									|| $item->{issued},
                         body    => $item->{content}
                                     || $item->{summary},
                         guid    => $guid,
@@ -143,6 +145,7 @@ sub atom_end {
             || $elem eq 'title'
             || $elem eq 'published'
             || $elem eq 'updated'
+			|| $elem eq 'issued'
             || $elem eq 'content'
             || $elem eq 'summary') 
     {

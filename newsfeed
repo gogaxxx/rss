@@ -1,26 +1,18 @@
 #!/bin/sh
 
 ROOT=/home/nephrite/rss
+MAXF=100
 
 cd $ROOT/feeds
-wget --user-agent='Mozilla' -t 3 -T 20 -N -x -o $ROOT/wget-log -i $ROOT/list
+echo See progress with tail -f $ROOT/wget-log
+wget --user-agent='Mozilla' -t 3 -T 20 -N -x -o $ROOT/wget-log -i $ROOT/list 
 cd $ROOT
 
 rm -f $ROOT/items/new
 if [ -e last_run ]; then
-	for i in `find $ROOT/feeds -type f -newer last_run`
-	do
-		echo ...
-		echo -n $i ' '
-		$ROOT/parser $i
-	done
+	find $ROOT/feeds -type f -newer last_run | xargs -L $MAXF $ROOT/parser
 else
-	for i in `find $ROOT/feeds -type f`
-	do
-		echo ...
-		echo -n $i ' '
-		$ROOT/parser $i
-	done
+	find $ROOT/feeds -type f | xargs -L $MAXF $ROOT/parser
 fi
 
 touch last_run

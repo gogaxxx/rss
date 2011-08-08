@@ -61,7 +61,9 @@ MAIN: {
 		eval {
      	   $parser->parsefile($file);
 		};
-		warn "here";
+		if ($@) {
+			warn "ERROR parsing $file: $@";
+		}
     }
 
     untie %guids;

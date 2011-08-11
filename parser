@@ -282,6 +282,13 @@ sub save_item {
 #
 sub transform_item {
 	my $item = shift;
+	# для всех: сцылки на youtube прописываем явно в тексте
+	my @videos = ();
+	while ($item->{body} =~ m{<[^>]+\="?(http://(?:[^\.]+\.)?youtube\.com/[^"\s>]+)}sg) { 
+		push @videos, $1;
+	}
+	$item->{body} .= '<br>'.join('<br>', map { 'Video: '.$_} @videos);
+
 	if ($item->{link} =~ /theregister\.com/o) {
 		# делать линк на печатную версию вместо обычной
 		$item->{link} .= '/print.html';

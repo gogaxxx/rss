@@ -8,6 +8,7 @@ use strict;
 use LWP::UserAgent;
 use POSIX qw(strftime);
 use XML::Parser;
+use utf8;
 
 my @weekdays = qw(
 Sun
@@ -21,6 +22,7 @@ Sep    Oct   Nov    Dec
 );
 
 MAIN: {
+	binmode STDOUT, ':utf8';
 	my $in_file = $ARGV[0];
 
 	open(IN, $in_file) || die("Can't open $in_file: $!");
@@ -42,34 +44,35 @@ MAIN: {
 	print '<body>';
 
 	my $ua = LWP::UserAgent->new();
+	my $parser = XML::Parser->new();
+	$parser->{self}=$parser;
 	$ua->env_proxy();
 
 	while (my $url = <IN>) {
 		chomp $url;
 
 		my $response = $ua->get($url);
-		my ($text, $text);
+		my ($text, $type);
 		if ($response->is_success) {
-    		my $parser = XML::Parser->new();
-			$parser->{stack} = [];
-			$parser->{type}  = '';
+			$parser->{in_entry} = 0;
         	$parser->setHandlers(Start => \&xml_start_detect);
 
-use Data::Dumper;
-warn Dumper($parser);
 			$parser->parse(
 				$response->decoded_content 
 				|| $response->content);
 
-			print "TYPE=", $parser->{type};
-			exit();
+			$text = $parser->{title};
+			$type = $parser->{type};
 		}
 		else {
 			warn ("Can't get $url: ", $response->status_line);
 			$text = $url;
 		}
 
-		print('<outline xmlUrl="', $url, '"/>', "\n");
+		print('<outline',
+				($type ? ' type="'.$type.'"' : ''),
+				' text="', $text, '"',
+			 	' xmlUrl="', $url, '"/>', "\n");
 	}
 	print '</body>';
 	print '</opml>';
@@ -77,15 +80,13 @@ warn Dumper($parser);
 	close IN;
 }
 
-# XXX спопипащено из parser, перенести в пакет!
+# handlers #+++1
+# xml_start_detect #+++2
 sub xml_start_detect {
     my ($expat, $elem)=@_;
-	warn Dumper($expat);
 
     if ($elem eq 'feed') {
-        $expat->{type} = 'atom';
-        print 'atom ';
-
+        $expat->{self}{type} = 'atom';
         $expat->setHandlers(Start => \&atom_start,
                             End   => \&atom_end,
                             Char  => \&common_char);
@@ -93,8 +94,7 @@ sub xml_start_detect {
     elsif ($elem eq 'rss'
             || lc($elem) eq 'rdf:rdf')
     {
-        $expat->{type} = 'rss';
-        print 'rss ';
+        $expat->{self}{type} = 'rss';
         $expat->setHandlers(Start => \&rss_start,
                             End   => \&rss_end,
                             Char  => \&common_char);
@@ -110,74 +110,55 @@ sub atom_start {
     my ($expat, $elem, %attr)=@_;
 
     if ($elem eq 'title') {
+		$expat->{self}{in_title} = 1;
+		$expat->{self}{title} = '';
     }
-    elsif ($elem eq 'link') {
-        if ($attr{rel} eq 'alternate' 
-            || !defined $expat->{item}{link}) 
-        {
-            $expat->{item}{link} = $attr{href};
-        }
-    }
-    elsif ($elem eq 'id'
-            || $elem eq 'title'
-            || $elem eq 'published'
-            || $elem eq 'updated'
-			|| $elem eq 'created'
-			|| $elem eq 'modified'
-			|| $elem eq 'issued'
-            || $elem eq 'content'
-            || $elem eq 'summary')
-    {
-        $expat->{curparam} = $elem;
-        $expat->{item}{$expat->{curparam}} = '';
-    }
+	elsif ($elem eq 'entry') {
+		$expat->finish();
+	}
 }
 
 #+++2 atom_end 
 sub atom_end {
     my ($expat, $elem)=@_;
 
-    if ($elem eq 'entry') {
-        my $item = $expat->{item};
-        my $guid = $item->{id} || $item->{link};
-            $guid =~ s/\s/_/go;
-        save_item($expat->{guids}, {
-                        subject => $item->{title},
-                        date    => $item->{created}
-									|| $item->{modified} 
-									|| $item->{updated} 
-                                    || $item->{published}
-									|| $item->{issued},
-                        body    => $item->{content}
-                                    || $item->{summary},
-                        guid    => $guid,
-                        link    => $item->{link}
-                    });
+	if ($elem eq 'title'
+		&& $expat->{self}{in_title}) 
+	{
+		$expat->finish();
+	}
+}
+
+### rss_start ####### #+++2
+sub rss_start {
+    my ($expat, $elem, %attr)=@_;
+
+    if ($elem eq 'title') {
+		$expat->{self}{in_title} = 1;
+		$expat->{self}{title} = '';
     }
-    elsif ($elem eq 'id'
-            || $elem eq 'title'
-            || $elem eq 'published'
-            || $elem eq 'updated'
-			|| $elem eq 'created'
-			|| $elem eq 'modified'
-			|| $elem eq 'issued'
-            || $elem eq 'content'
-            || $elem eq 'summary') 
-    {
-        if($expat->{curparam} ne $elem) {
-            $expat->finish();
-        }
-        else {
-            $expat->{curparam} = undef;
-        }
-    }
+	elsif ($elem eq 'item'
+			|| $elem eq 'items') {
+		$expat->finish();
+	}
+}
+
+#+++2 rss_end 
+sub rss_end {
+    my ($expat, $elem)=@_;
+
+	if ($elem eq 'title'
+		&& $expat->{self}{in_title}) 
+	{
+		$expat->finish();
+	}
 }
 
 #+++2 common_char
 sub common_char {
     my ($expat, $string)=@_;
 
-    if (defined $expat->{curparam}) {
-        $expat->{item}{$expat->{curparam}} .= $string;
+    if ($expat->{self}{in_title}) {
+        $expat->{self}{title} .= $string;
     }
 }

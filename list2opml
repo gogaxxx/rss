@@ -1,0 +1,183 @@
+#!/usr/bin/perl
+#
+#
+#
+
+use strict;
+
+use LWP::UserAgent;
+use POSIX qw(strftime);
+use XML::Parser;
+
+my @weekdays = qw(
+Sun
+Mon Tue Wed Thu Fri Sat  
+);
+
+my @months = qw(
+Jan    Feb   Mar    Apr
+May    Jun   Jul    Aug
+Sep    Oct   Nov    Dec
+);
+
+MAIN: {
+	my $in_file = $ARGV[0];
+
+	open(IN, $in_file) || die("Can't open $in_file: $!");
+
+	print '<opml>';
+
+	my @lt = localtime();
+	print '<head>';
+	print '<dateCreated>',
+			sprintf('%s, %d %s %.4d %.2d:%.2d:%.2d',
+					$weekdays[$lt[6]], 
+					$lt[3],
+					$months[$lt[4]],
+					$lt[5]+1900,
+					$lt[2], $lt[1], $lt[0]),
+			'</dateCreated>';
+	print '</head>';
+
+	print '<body>';
+
+	my $ua = LWP::UserAgent->new();
+	$ua->env_proxy();
+
+	while (my $url = <IN>) {
+		chomp $url;
+
+		my $response = $ua->get($url);
+		my ($text, $text);
+		if ($response->is_success) {
+    		my $parser = XML::Parser->new();
+			$parser->{stack} = [];
+			$parser->{type}  = '';
+        	$parser->setHandlers(Start => \&xml_start_detect);
+
+use Data::Dumper;
+warn Dumper($parser);
+			$parser->parse(
+				$response->decoded_content 
+				|| $response->content);
+
+			print "TYPE=", $parser->{type};
+			exit();
+		}
+		else {
+			warn ("Can't get $url: ", $response->status_line);
+			$text = $url;
+		}
+
+		print('<outline xmlUrl="', $url, '"/>', "\n");
+	}
+	print '</body>';
+	print '</opml>';
+
+	close IN;
+}
+
+# XXX спопипащено из parser, перенести в пакет!
+sub xml_start_detect {
+    my ($expat, $elem)=@_;
+	warn Dumper($expat);
+
+    if ($elem eq 'feed') {
+        $expat->{type} = 'atom';
+        print 'atom ';
+
+        $expat->setHandlers(Start => \&atom_start,
+                            End   => \&atom_end,
+                            Char  => \&common_char);
+    }
+    elsif ($elem eq 'rss'
+            || lc($elem) eq 'rdf:rdf')
+    {
+        $expat->{type} = 'rss';
+        print 'rss ';
+        $expat->setHandlers(Start => \&rss_start,
+                            End   => \&rss_end,
+                            Char  => \&common_char);
+    }
+    else {
+        print 'UNKNOWN TYPE ';
+        $expat->finish();
+    }
+}
+
+### atom_start ####### #+++2
+sub atom_start {
+    my ($expat, $elem, %attr)=@_;
+
+    if ($elem eq 'title') {
+    }
+    elsif ($elem eq 'link') {
+        if ($attr{rel} eq 'alternate' 
+            || !defined $expat->{item}{link}) 
+        {
+            $expat->{item}{link} = $attr{href};
+        }
+    }
+    elsif ($elem eq 'id'
+            || $elem eq 'title'
+            || $elem eq 'published'
+            || $elem eq 'updated'
+			|| $elem eq 'created'
+			|| $elem eq 'modified'
+			|| $elem eq 'issued'
+            || $elem eq 'content'
+            || $elem eq 'summary')
+    {
+        $expat->{curparam} = $elem;
+        $expat->{item}{$expat->{curparam}} = '';
+    }
+}
+
+#+++2 atom_end 
+sub atom_end {
+    my ($expat, $elem)=@_;
+
+    if ($elem eq 'entry') {
+        my $item = $expat->{item};
+        my $guid = $item->{id} || $item->{link};
+            $guid =~ s/\s/_/go;
+        save_item($expat->{guids}, {
+                        subject => $item->{title},
+                        date    => $item->{created}
+									|| $item->{modified} 
+									|| $item->{updated} 
+                                    || $item->{published}
+									|| $item->{issued},
+                        body    => $item->{content}
+                                    || $item->{summary},
+                        guid    => $guid,
+                        link    => $item->{link}
+                    });
+    }
+    elsif ($elem eq 'id'
+            || $elem eq 'title'
+            || $elem eq 'published'
+            || $elem eq 'updated'
+			|| $elem eq 'created'
+			|| $elem eq 'modified'
+			|| $elem eq 'issued'
+            || $elem eq 'content'
+            || $elem eq 'summary') 
+    {
+        if($expat->{curparam} ne $elem) {
+            $expat->finish();
+        }
+        else {
+            $expat->{curparam} = undef;
+        }
+    }
+}
+
+#+++2 common_char
+sub common_char {
+    my ($expat, $string)=@_;
+
+    if (defined $expat->{curparam}) {
+        $expat->{item}{$expat->{curparam}} .= $string;
+    }
+}

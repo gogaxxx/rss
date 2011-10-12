@@ -1,8 +1,9 @@
 package Agg::Parser;
 
 my %parsers = (
-	atom => 'Agg::Parser::Atom',
-	rss  => 'Agg::Parser::RSS'
+	atom	=> 'Agg::Parser::Atom',
+	comic	=> 'Agg::Parser::Comic',
+	rss		=> 'Agg::Parser::RSS'
 );
 
 # new #+++1

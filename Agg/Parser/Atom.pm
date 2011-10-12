@@ -14,12 +14,12 @@ sub new {
 
     $self->{parser} = XML::Parser->new();
 	$self->{saver}  = Agg::Saver::RSS->new($cfg);
+	$self->{parser}{saver} = $self->{saver};
 	$self->{cfg} = $cfg;
 
 	$self->{parser}->setHandlers(Start => \&atom_start,
 								End   => \&atom_end,
 								Char  => \&common_char);
-	$self->{parser}{saver} = $self->{saver};
 	return $self;
 }
 # parse #+++1

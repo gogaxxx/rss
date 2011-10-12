@@ -34,6 +34,7 @@ sub get_config_by_id {
 		}
 	}
 	$self->{cache} = $self->{config_dir}.'/cache';
+	$self->{items_dir} = $self->{config_dir}.'/items';
 
 	return $self;
 }

@@ -5,6 +5,7 @@ use strict;
 use lib '.';
 use Agg::Config;
 use Agg::Download;
+use Agg::Parser;
 
 MAIN: {
 	my $id = $ARGV[0];
@@ -17,6 +18,6 @@ MAIN: {
 	$cfg->{content} = Agg::Download->mirror($cfg->{url},
 											$cfg->{cache});
 
-	use Data::Dumper;
-	warn Dumper($cfg);
+	my $parser = Agg::Parser->new($cfg);
+	$parser->parse();
 }

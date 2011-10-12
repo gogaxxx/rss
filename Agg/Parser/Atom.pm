@@ -2,33 +2,21 @@ package Agg::Parser::Atom;
 
 use strict;
 
-use Agg::Saver::RSS;
-use XML::Parser;
+use base qw(Agg::Parser::XML);
 
 # new #+++1
 sub new {
 	my $class=shift;
 	my ($cfg)=@_;
 
-	my $self=bless {}, $class;
-
-    $self->{parser} = XML::Parser->new();
-	$self->{saver}  = Agg::Saver::RSS->new($cfg);
-	$self->{parser}{saver} = $self->{saver};
-	$self->{cfg} = $cfg;
+	my $self=$class->SUPER::new(@_);
 
 	$self->{parser}->setHandlers(Start => \&atom_start,
 								End   => \&atom_end,
 								Char  => \&common_char);
 	return $self;
 }
-# parse #+++1
-sub parse { #XXX перенести в суперкласс
-	my $self=shift;
 
-	$self->{parser}->parse($self->{cfg}{content});
-	$self->{saver}->finish();
-}
 # handlers #+++1
 #+++2 atom_start
 sub atom_start {

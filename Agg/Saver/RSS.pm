@@ -33,7 +33,8 @@ sub save_item {
 			?  str2time($item->{date})
 			:  time();
 
-    Encode::_utf8_off($item->{subject}); # XXX use binmode instead
+    Encode::_utf8_off($item->{subject}); # XXX use binmode instead если
+				#юзать binmode криво работает strftime !!! (???)`
     Encode::_utf8_off($item->{body});
 
 	#transform_item($item);

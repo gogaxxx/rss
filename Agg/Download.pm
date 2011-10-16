@@ -11,7 +11,9 @@ use strict;
 
 sub mirror {
 	my $class=shift;
-	my ($url, $filename)=@_;
+	my ($url, $filename, $return_content)=@_;
+
+	$return_content //= 1;
 
 	my $ua = LWP::UserAgent->new();
 	$ua->env_proxy;
@@ -21,12 +23,14 @@ sub mirror {
 
 	if ($response->is_success 
 			or $response->code eq '304') {
-		my $content = '';
-		open(FILE, '<'.$filename) ||
-			die("[Comics::mirror] Can't open $filename: $!");
-		$content = join('', <FILE>);
-		close FILE;
-		return $content;
+		if ($return_content) {
+			my $content = '';
+			open(FILE, '<'.$filename) ||
+				die("[Comics::mirror] Can't open $filename: $!");
+			$content = join('', <FILE>);
+			close FILE;
+			return $content;
+		}
 	}
 	else {
 		die ("Can't get $url: ", $response->status_line);

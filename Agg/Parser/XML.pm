@@ -2,29 +2,18 @@ package Agg::Parser::XML;
 
 use strict;
 
+use base qw(Agg::Parser::Super);
 use Agg::Saver::RSS;
 use XML::Parser;
 
-# new #+++1
-sub new {
-	my $class=shift;
-	my ($cfg)=@_;
-
-	my $self=bless {}, $class;
-
-    $self->{parser} = XML::Parser->new();
-	$self->{saver}  = Agg::Saver::RSS->new($cfg);
-	$self->{parser}{saver} = $self->{saver};
-	$self->{cfg} = $cfg;
-
-	return $self;
-}
-# parse #+++1
-sub parse { #XXX перенести в суперкласс
+sub init_parser {
 	my $self=shift;
+	return XML::Parser->new();
+}
 
-	$self->{parser}->parse($self->{cfg}{content});
-	$self->{saver}->finish();
+sub init_saver {
+	my $self=shift;
+	return Agg::Saver::RSS->new(@_);
 }
 
 #---1

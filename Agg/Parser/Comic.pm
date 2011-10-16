@@ -1,21 +1,9 @@
 package Agg::Parser::Comic;
 
 use strict;
+use base qw(Agg::Parser::Super);
 use Agg::Saver::Comic;
-
-sub new {
-	my $class=shift;
-	my ($cfg)=@_;
-
-	my $self = bless {}, $class;
-
-	$self->{parser} = $self->init_parser();
-	$self->{saver}  = Agg::Saver::Comic->new($cfg);
-	$self->{parser}{saver} = $self->{saver};
-	$self->{cfg}	= $cfg;
-
-	return $self;
-}
+use HTML::Parser;
 
 sub image { ('img', 'src')}
 
@@ -30,6 +18,11 @@ sub init_parser {
 		map {lc($_)} $self->image;
 
 	return $parser;
+}
+
+sub init_saver {
+	my $self=shift;
+	return Agg::Saver::Comic->new(@_);
 }
 
 sub start_tag {
@@ -67,13 +60,6 @@ sub check {
 			date => $1.'-'.$2.'-'.$3
 		}
 	}
-}
-
-sub parse { #XXX перенести в суперкласс
-	my $self=shift;
-
-	$self->{parser}->parse($self->{cfg}{content});
-	$self->{saver}->finish();
 }
 
 1;

@@ -1,41 +1,23 @@
 package Agg::Parser::Comic;
 
 use strict;
+use Agg::Saver::Comic;
 
 sub new {
 	my $class=shift;
 	my ($cfg)=@_;
 
-	my $self = {
-		cache_dir => $c
-	};
-
-	bless($self, $class);
+	my $self = bless {}, $class;
 
 	$self->{parser} = $self->init_parser();
+	$self->{saver}  = Agg::Saver::Comic->new($cfg);
+	$self->{parser}{saver} = $self->{saver};
+	$self->{cfg}	= $cfg;
 
 	return $self;
 }
 
-sub cache_dir {
-	return shift->{cache_dir};
-}
-
-sub fetch {
-	my $self=shift;
-
-	warn "[Comics::fetch] start" if (DEBUG);
-	my $html = mirror($self->url(), $self->cache_dir.'/'.$self->name.'.html');
-	warn "[Comics::fetch] fetched url" if (DEBUG);
-
-	$parser->parse($html);
-	$self->post_process();
-
-	return $self->{found};
-}
-
 sub image { ('img', 'src')}
-sub post_process {}
 
 sub init_parser {
 	my $self=shift;
@@ -44,7 +26,6 @@ sub init_parser {
 		start_h => [\&start_tag, 'self, tagname, attr']
 	);
 	$parser->{self}=$self;
-	$self->{num}  =1;
 	($self->{image_tag}, $self->{image_attr}) =
 		map {lc($_)} $self->image;
 
@@ -65,15 +46,34 @@ sub image_check {
 	my $self=$parser->{self};
 	my $url = $attr->{$self->{image_attr}};
 	if (my $found = $self->check($url)) {
-		$found->{num} ||= $self->{num}++;
 		$found->{url} ||= $url;
-		push @{$self->{found}}, $found;
+		$found->{time}	= $found->{date} || 0; # XXX сделать что-то
+												#осмысленное
+		$found->{guid}	= $url;
+		$parser->{saver}->save_item($found);
 	}
 }
 
+#sub check {
+#	my $self=shift;
+#	die("Override ${self}::check");
+#}
 sub check {
+	my ($class, $url)=@_;
+	# warning! subdomain "zii" may change I'm sure
+	if ($url =~ m!^http://zii\.menagea3\.net/comics/mat(\d\d\d\d)(\d\d)(\d\d)\.([^"]+)$!o) {
+		return {
+			ext => $4,
+			date => $1.'-'.$2.'-'.$3
+		}
+	}
+}
+
+sub parse { #XXX перенести в суперкласс
 	my $self=shift;
-	die("Override ${self}::check");
+
+	$self->{parser}->parse($self->{cfg}{content});
+	$self->{saver}->finish();
 }
 
 1;

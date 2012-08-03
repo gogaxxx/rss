@@ -262,7 +262,7 @@ sub save_item {
 		'<a class="itemlink" href="'
 		. $item->{link}
 		. '" target=_blank>[link-='.$item->{name}.': '
-		. $show_link, ']</a>';
+		. $show_link. ']</a>';
     print OUT ('<h1>', $item->{subject},
                 '</h1>', $link_html);
     print OUT ('<span class="date">',

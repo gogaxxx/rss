@@ -258,9 +258,11 @@ sub save_item {
             $show_link .= '...';
     }
 	# TODO: move to templates
-	my $link_html = '<a class="itemlink" href="', 
-                $item->{link},
-                '" target=_blank>[link-='.$item->{name}.': ', $show_link, ']</a>';
+	my $link_html = 
+		'<a class="itemlink" href="'
+		. $item->{link}
+		. '" target=_blank>[link-='.$item->{name}.': '
+		. $show_link, ']</a>';
     print OUT ('<h1>', $item->{subject},
                 '</h1>', $link_html);
     print OUT ('<span class="date">',

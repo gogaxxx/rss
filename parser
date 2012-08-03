@@ -257,14 +257,16 @@ sub save_item {
     if (length($show_link) < length($item->{link})) {
             $show_link .= '...';
     }
-    print OUT ('<h1>', $item->{subject},
-                '</h1><a class="itemlink" href="', 
+	# TODO: move to templates
+	my $link_html = '<a class="itemlink" href="', 
                 $item->{link},
-                '" target=_blank>[link-='.$item->{name}.': ', $show_link, ']</a>');
+                '" target=_blank>[link-='.$item->{name}.': ', $show_link, ']</a>';
+    print OUT ('<h1>', $item->{subject},
+                '</h1>', $link_html);
     print OUT ('<span class="date">',
                 strftime($cfg::date_format, localtime($item->{'time'})),
                 '</span><div class="body">');
-    print OUT ($item->{body}, '</div><br clear=all><hr>');
+    print OUT ($item->{body}, '</div>', $link_html, '<br clear=all><hr>');
     close OUT;
 
 	save_item_data($item);

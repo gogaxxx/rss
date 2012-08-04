@@ -1,0 +1,24 @@
+opendir(DIR, '.') || die("can't opendir: $!");
+while (my $filename = readdir(DIR)) {
+	next if ($filename !~ /^\d+$/);
+	print $filename, "\n";
+
+	open(OUT, '>/home/nephrite/Mail/test/'.$filename);
+	print OUT <<END_OF_HEADER;
+From: rss@localhost
+To: nephrite@localhost
+Subject: rss message
+Content-type: text/html; charset=utf-8
+Content-transfer-encoding: 8bit
+Date: Fri, 30 Sep 2011 16:10:00
+
+END_OF_HEADER
+
+	open(IN, '<'.$filename);
+	while(<IN>) {
+		print OUT $_;
+	}
+	close IN;
+	close OUT;
+}
+closedir(DIR);

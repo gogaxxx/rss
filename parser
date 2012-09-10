@@ -32,7 +32,6 @@ use utf8;
 
 use Fcntl qw(:DEFAULT :flock :seek);
 use AnyDBM_File;
-use POSIX qw(strftime);
 use RSS::Item;
 
 use XML::Parser;
@@ -248,90 +247,6 @@ sub save_item {
     save_id($item->{'name'});
     print($item->{'name'}, ' ');
 }
-
-### transform_item  ####### #+++2
-#
-# transform item to something better
-#
-# TODO сделать plugin'ы для трансформации, а то эта функция грозит
-# разрастись
-#
-sub transform_item {
-	my $item = shift;
-	# для всех: сцылки на youtube прописываем явно в тексте
-	my @videos = ();
-	while ($item->{body} =~ m{<[^>]+\=['"]?(http://(?:[^\.]+\.)?youtube\.com/[^'"\s>]+)}sg) { 
-		push @videos, $1;
-	}
-	$item->{body} .= '<br>'.join('<br>', map { 'Video: '.$_} @videos);
-
-	if ($item->{link} =~ /theregister\.com/o) {
-		# делать линк на печатную версию вместо обычной
-		$item->{link} .= '/print.html';
-	}
-	elsif ($item->{link} =~ /lj\.rossia\.org/o) {
-		# ljro shit # XXX dirty hack
-		$item->{body} =~ s/<\/?font[^>]*>//g;
-	}
-	elsif ($item->{link} =~ /idiottoys\.com/o) {
-		transform_idiot($item);
-	}
-} #---2
-
-# transform_idiot #+++2
-sub transform_idiot {
-	my $item=shift;
-
-	use HTML::Parser;
-	my $parser = HTML::Parser->new(
-		xml_mode => 1,
-		case_sensitive => 0,
-		start_h => [ \&idiot_start,   'self,tagname, attr, text'],
-		default_h => [ \&idiot_default, 'self,text' ]
-	);
-
-	$parser->{OUTPUT} = '';
-	$parser->parse($item->{body});
-
-	$item->{body} = $parser->{OUTPUT};
-}
-
-### idiot_start  ####### #+++3
-sub idiot_start {
-	my ($self, $tagname, $attr, $text)=@_;
-
-	my $t1;
-	if ($tagname eq 'img') {
-		$t1 = idiot_tr_link('img', 'src', $attr);
-	}
-	elsif ($tagname eq 'a') {
-		$t1 = idiot_tr_link('a', 'href', $attr);
-	}
-	$text = 
-		$t1 ? $t1 : $text;
-	idiot_default($self, $text);
-}
-### idiot_tr_link  ####### #+++3
-sub idiot_tr_link {
-	my ($tagname, $href_name, $attr)=@_;
-
-	if ($attr->{$href_name} !~ m{^http://}o) {
-		$attr->{$href_name} =
-			'http://www.idiottoys.com'.$attr->{$href_name};
-		return join(' ', '<'.$tagname,
-						(map {
-							$_.'="'.$attr->{$_}.'"'
-						} keys %$attr)). '>';
-	}
-	return undef;
-}
-### idiot_default  ####### #+++3
-sub idiot_default {
-	my ($self, $text)=@_;
-
-	$self->{OUTPUT} .= $text;
-}
-#---2
 
 sub get_saved_id {
     if (open(IN, '<'.$cfg::items_dir.'/number')) {

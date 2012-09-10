@@ -30,11 +30,10 @@ use cfg;
 
 use utf8;
 
-use Date::Parse;
-use Encode;
 use Fcntl qw(:DEFAULT :flock :seek);
 use AnyDBM_File;
 use POSIX qw(strftime);
+use RSS::Item;
 
 use XML::Parser;
 
@@ -240,36 +239,9 @@ sub save_item {
 
 	$guids->{$item->{guid}} = 1;
 
-    $item->{'time'} = 
-		$item->{date}
-			?  str2time($item->{date})
-			:  time();
-
-    Encode::_utf8_off($item->{subject});
-    Encode::_utf8_off($item->{body});
-
-	transform_item($item);
-
     $item->{'name'} = get_saved_id();
 
-    open (OUT, '>' . $cfg::items_dir . '/'. $item->{'name'});
-    my $show_link = substr($item->{link}, 0, 40);
-    if (length($show_link) < length($item->{link})) {
-            $show_link .= '...';
-    }
-	# TODO: move to templates
-	my $link_html = 
-		'<a class="itemlink" href="'
-		. $item->{link}
-		. '" target=_blank>[link-='.$item->{name}.': '
-		. $show_link. ']</a>';
-    print OUT ('<h1>', $item->{subject},
-                '</h1>', $link_html);
-    print OUT ('<span class="date">',
-                strftime($cfg::date_format, localtime($item->{'time'})),
-                '</span><div class="body">');
-    print OUT ($item->{body}, '</div>', $link_html, '<br clear=all><hr>');
-    close OUT;
+	RSS::Item::save_item($item);
 
 	save_item_data($item);
 

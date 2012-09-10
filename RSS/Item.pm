@@ -44,7 +44,7 @@ sub load_item {
 		last if ($line =~ /^\s*$/o);
 
 		my $in_line = Encode::decode('utf-8', $line);
-		my ($name, $content) = split(/:\s+/o, $line, 2);
+		my ($name, $content) = split(/:\s+/o, $in_line, 2);
 		$item->{$name} = $content;
 	}
 

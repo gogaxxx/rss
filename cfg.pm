@@ -10,6 +10,7 @@ $active_file    = '/home/nephrite/work/rss2mail-home/active';
 $default_period = 60;
 
 $root = '/home/nephrite/rss';
+$config_dir = "$root/config";
 
 #
 # feeds_dir - raw feeds from internet put in this directory

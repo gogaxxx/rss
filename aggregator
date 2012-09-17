@@ -1,0 +1,23 @@
+#!/usr/bin/perl
+
+use strict;
+
+use lib '.';
+use Agg::Config;
+use Agg::Download;
+use Agg::Parser;
+
+MAIN: {
+	my $id = $ARGV[0];
+
+	if (!defined($id) || $id eq '') {
+		die("Specify id");
+	}
+
+	my $cfg = Agg::Config->get_config_by_id($id);
+	$cfg->{content} = Agg::Download->mirror($cfg->{url},
+											$cfg->{cache});
+
+	my $parser = Agg::Parser->new($cfg);
+	$parser->parse();
+}

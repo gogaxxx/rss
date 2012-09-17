@@ -1,9 +1,12 @@
 RCS
+config
 feeds
+guids
 guids.db
 items
 last_run
 list
+list,v
 log
 new
 read

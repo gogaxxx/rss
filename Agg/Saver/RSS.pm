@@ -2,9 +2,6 @@ package Agg::Saver::RSS;
 
 use strict;
 use base qw(Agg::Saver);
-use Date::Parse;
-use Encode;
-use POSIX qw(strftime);
 use RSS::Item;
 
 #+++1 new

@@ -26,15 +26,14 @@ sub save_item {
 			?  str2time($item->{date})
 			:  time();
 
-    my $out_subject = Encode::encode('utf-8', $item->{subject});
     my $out_body    = Encode::encode('utf-8', $item->{body});
 
     open (OUT, '>' . $self->{cfg}{items_dir} . '/'. $item->{'name'});
-	print OUT 'name: ',		$item->{name},		"\n";
-	print OUT 'guid: ',		$item->{guid},		"\n";
-	print OUT 'link: ', 	$item->{link},		"\n";
-	print OUT 'time: ', 	$item->{time},		"\n";
-	print OUT 'subject: ', 	$out_subject,		"\n";
+	while (my ($k, $v) = each %$item) {
+		next if ($k eq 'body');
+
+		print OUT ($k, ': ', Encode::encode('utf-8', $v), "\n");
+	}
 	print OUT "\n", $out_body;
 	close OUT;
 }

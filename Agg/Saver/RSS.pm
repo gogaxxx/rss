@@ -2,7 +2,7 @@ package Agg::Saver::RSS;
 
 use strict;
 use base qw(Agg::Saver);
-use RSS::Item;
+use Agg::Item;
 
 #+++1 new
 sub new {
@@ -10,7 +10,7 @@ sub new {
 
 	my $self=$class->SUPER::new(@_);
 
-	$self->{itemizer} = RSS::Item->new($self->{cfg});
+	$self->{itemizer} = Agg::Item->new($self->{cfg});
     $self->{item_num} = $self->get_saved_id();
 
 	return $self;

@@ -1,5 +1,5 @@
 #
-package RSS::Item;
+package Agg::Item;
 
 use strict;
 use warnings;

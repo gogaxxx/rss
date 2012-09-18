@@ -35,6 +35,7 @@ sub save_item {
 	$self->{item_num}++;
 }
 
+### get_saved_id ####+++1
 sub get_saved_id {
 	my $self=shift;
 
@@ -52,6 +53,7 @@ sub get_saved_id {
     }
 }
 
+### save_id ####+++1
 sub save_id {
 	my $self=shift;
 

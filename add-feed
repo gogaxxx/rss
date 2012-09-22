@@ -1,19 +1,59 @@
-#!/bin/sh
+#!/usr/bin/perl
 
-LINK=$1
+use Agg::Config;
+use Digest::MD5 qw(md5_hex);
+use LWP::UserAgent;
+use XML::Parser;
 
-if [ 'x'$LINK = 'x' ]; then
-	echo Specify URL
-	exit
-fi
+our $type;
 
-if [ ! -e list ]; then
-	touch list
-fi
+MAIN: {
+    my $url = $ARGV[0];
 
-echo $LINK >new-link
-sort -m list new-link >new-list
-mv new-list list
-rm new-link
-ci -l -m"Added $LINK" list
-	
+    unless ($url) {
+        die("Specify url");
+    }
+
+    my $ua = LWP::UserAgent->new();
+    $ua->env_proxy();
+    my $response = $ua->get($url);  
+
+    if ($response->is_success) {
+        my $parser = XML::Parser->new();
+        $parser->setHandlers(Start => \&xml_start_detect);
+        $parser->parse($response->content);
+
+        my $root = $Agg::Config::config_dir;
+        $dir = md5_hex($url);
+        mkdir($root.'/'.$dir) || die("Can't create dir $dir: $!");
+        open (CFG, '>'.$root.'/'.$dir.'/config')
+            || die("Can't open cfg file: $!");
+        print CFG "name=some name\n";
+        print CFG "url=$url\n";
+        print CFG "type=$type\n";
+        close CFG;
+
+        print "Successfully added\n\n";
+    }
+    else {
+        die($response->status_line);
+    }
+}
+
+#+++1 xml_start_detect
+sub xml_start_detect {
+    my ($expat, $elem)=@_;
+
+    if ($elem eq 'feed') {
+        $type = 'atom';
+    }
+    elsif ($elem eq 'rss'
+            || lc($elem) eq 'rdf:rdf')
+    {
+        $type = 'rss';
+    }
+    else {
+        die'UNKNOWN TYPE '.$elem;
+    }
+    $expat->finish();
+}

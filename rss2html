@@ -1,0 +1,51 @@
+#!/usr/bin/perl
+#
+#
+#
+
+use strict;
+use warnings;
+
+use Agg::Config;
+use Agg::Item;
+use Agg::Transform::LocalImages;
+
+MAIN: {
+	my $feed_id = $ARGV[0] || die("Specify feed id");
+
+	my $cfg = Agg::Config->get_config_by_id($feed_id);
+
+	# грузим master
+	my @master = ();
+	open(MASTER, '<'.$cfg->{master}) 
+		|| die("Can't open ".$cfg->{master}.": $!");
+	while (my $line = <MASTER>) {
+		chomp $line;
+
+		# XXX возможно добавить фильтрацию по времени, например
+
+		push @master,
+			[ split(/\s+/o, $line, 3) ];
+	}
+	close MASTER;
+
+	# сортируем по времени
+	@master = sort { $a->[0] <=> $b->[0] } @master;
+
+    my $itemizer = Agg::Item->new($cfg);
+    my $transform = Agg::Transform::LocalImages->new($cfg);
+
+    my $outfile = $cfg->{read_dir}.'/'.$cfg->{name}.'.html';
+	open(OUT, '>'.$outfile) || die("Can't open $outfile: $!");
+    
+    for my $i (@master) {
+        my $item = $itemizer->load_item($i->[1]);
+        $transform->transform_item($item);
+
+        # XXX вместо utf-8 сделать конфигурируемый параметр
+        print OUT Encode::encode('utf-8', '<h1>'.$item->{subject}.'</h1>');
+        print OUT Encode::encode('utf-8', '<div class=body>'.$item->{body}.'</div>');
+        print OUT "<hr>\n";
+    }
+    close OUT;
+}

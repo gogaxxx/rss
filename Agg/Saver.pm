@@ -11,8 +11,6 @@ sub new {
 	my $self = bless {}, $class;
 	$self->{cfg} = $cfg;
 
-	my $cfg->{items_dir} = $cfg->{config_dir}.'/items';
-
 	if (-e $cfg->{items_dir} && !-d $cfg->{items_dir}) {
 		die("[Agg::Saver::RSS] $cfg->{items_dir} is not a directory");
 	}
@@ -20,7 +18,7 @@ sub new {
 		mkdir($cfg->{items_dir})
 			or die("[Agg::Saver::RSS] can't create $cfg->{items_dir}: $!");
 	}
-	$self->{master} = $self->{cfg}{config_dir}.'/master';
+	$self->{master} = $self->{cfg}{master};
 	$self->{guidsfile}  = $self->{cfg}{config_dir}.'/guids';
 
 	$self->check_and_create_db();

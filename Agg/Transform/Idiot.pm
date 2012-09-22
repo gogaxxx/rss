@@ -1,4 +1,4 @@
-package RSS::Transform::Idiot;
+package Agg::Transform::Idiot;
 
 use HTML::Parser;
 

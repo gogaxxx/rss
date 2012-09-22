@@ -1,10 +1,10 @@
-package RSS::Transform;
+package Agg::Transform;
 
 use strict;
 use warnings;
 
 # plugins
-use RSS::Transform::Idiot;
+use Agg::Transform::Idiot;
 
 # transform_item #+++1
 sub transform_item {
@@ -25,7 +25,7 @@ sub transform_item {
 		$item->{body} =~ s/<\/?font[^>]*>//g;
 	}
 	elsif ($item->{link} =~ /idiottoys\.com/o) {
-		RSS::Transform::Idiot::transform($item);
+		Agg::Transform::Idiot::transform($item);
 	}
 } 
 

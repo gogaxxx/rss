@@ -3,7 +3,8 @@ package Agg::Config;
 use strict;
 use warnings;
 
-use cfg;
+my $root = '/home/nephrite/rss';
+my $config_dir = "$root/config";
 
 # name  - название ленты
 # type  - тип, например, atom или rss - используется для определения,
@@ -17,18 +18,11 @@ sub get_config_by_id {
 	my $id = shift;
 
 	my $self = bless {}, $class;
-	
-	$self->{config_dir} = $cfg::config_dir.'/'.$id;
-	my $config_filename = $self->{config_dir}.'/config';
-	open(FILE, '<', $config_filename)
-		or die("Can't open $config_filename: $!");
-	while(my $line = <FILE>) {
-		chomp $line;
 
-		my @pair = split(/=/, $line, 2);
-		$self->{$pair[0]} = $pair[1];
-	}
-	close FILE;
+	$self->{config_dir} = $config_dir.'/'.$id;
+	my $config_filename = $self->{config_dir}.'/config';
+    $self->read_file($config_dir.'/config');
+    $self->read_file($config_filename);
 
     # считываем конфигурируемые пользователем поля из файла
 	for my $f (@fields) {
@@ -39,21 +33,41 @@ sub get_config_by_id {
 		}
 	}
 
-    # формируем производные поля
+    # формируем поля по-умолчанию
 	# кеш - где хранятся скачанные rss
-	$self->{cache} = $self->{config_dir}.'/cache';
+	$self->{cache} ||= $self->{config_dir}.'/cache';
 
 	# где хранятся готовые итемы
-	$self->{items_dir} = $self->{config_dir}.'/items';
+	$self->{items_dir} ||= $self->{config_dir}.'/items';
 
 	# master - указатель для итемов, в нём содержатся данные по итемам,
 	# такие как время и гуид
-	$self->{master} = $self->{config_dir}.'/master';
+	$self->{master} ||= $self->{config_dir}.'/master';
 
-	# read_dir - где находятся готовые файлы для чтения человеком
-	$self->{read_dir} = $self->{config_dir}.'/read';
+	# readdir - где находятся готовые файлы для чтения человеком
+	$self->{'readdir'} ||= $self->{config_dir}.'/read';
 
 	return $self;
+}
+
+# #+++1 
+sub read_file {
+    my $self=shift;
+    my $config_filename=shift;
+
+	open(FILE, '<', $config_filename)
+		or die("Can't open $config_filename: $!");
+	while(my $line = <FILE>) {
+		chomp $line;
+
+		my @pair = split(/=/, $line, 2);
+        
+        # заменяем переменные
+        $pair[1] =~ s/\$\{[^\}]+\}/$self->{$1}/g;
+
+		$self->{$pair[0]} = $pair[1];
+	}
+	close FILE;
 }
 
 #---1

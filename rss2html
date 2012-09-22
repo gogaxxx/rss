@@ -35,7 +35,7 @@ MAIN: {
     my $itemizer = Agg::Item->new($cfg);
     my $transform = Agg::Transform::LocalImages->new($cfg);
 
-    my $outfile = $cfg->{read_dir}.'/'.$cfg->{name}.'.html';
+    my $outfile = $cfg->{readdir}.'/'.$cfg->{name}.'.html';
 	open(OUT, '>'.$outfile) || die("Can't open $outfile: $!");
     
     for my $i (@master) {

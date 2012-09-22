@@ -64,7 +64,7 @@ sub load_img {
     my ($self, $attr) = @_;
 
     my $filename =
-        $self->{transformer}{cfg}{read_dir}.'/'.$self->{img_number};
+        $self->{transformer}{cfg}{'readdir'}.'/'.$self->{img_number};
     warn "filename=$filename\n";
     warn "url=".$attr->{src}."\n";
     $self->{transformer}{loader}->mirror($attr->{src}, $filename);

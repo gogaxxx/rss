@@ -3,8 +3,8 @@ package Agg::Config;
 use strict;
 use warnings;
 
-my $root = '/home/nephrite/rss';
-my $config_dir = "$root/config";
+our $root = '/home/nephrite/rss';
+our $config_dir = "$root/config";
 
 # name  - название ленты
 # type  - тип, например, atom или rss - используется для определения,

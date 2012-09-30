@@ -43,8 +43,8 @@ MAIN: {
         $transform->transform_item($item);
 
         # XXX вместо utf-8 сделать конфигурируемый параметр
-        print OUT Encode::encode('utf-8', '<h1>'.$item->{subject}.'<br></h1>');
-        print OUT Encode::encode('utf-8', '<div class=body>'.$item->{body}.'</div>');
+        print OUT Encode::encode($cfg->{'encoding'}, '<h1>'.$item->{subject}.'<br></h1>');
+        print OUT Encode::encode($cfg->{'encoding'}, '<div class=body>'.$item->{body}.'</div>');
         print OUT "<hr>\n";
     }
     close OUT;

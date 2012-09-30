@@ -7,6 +7,10 @@ use warnings;
 use Date::Parse;
 use Encode;
 
+# эту кодировку вписываем жёстко, потому что это наша внутренняя база
+# данных, которую юзер видеть не должен
+use constant ENCODING => 'utf-8';
+
 sub new {
 	my $class=shift;
 	my $cfg = shift;
@@ -26,13 +30,13 @@ sub save_item {
 			?  str2time($item->{date})
 			:  time();
 
-    my $out_body    = Encode::encode('utf-8', $item->{body});
+    my $out_body    = Encode::encode(ENCODING, $item->{body});
 
     open (OUT, '>' . $self->{cfg}{items_dir} . '/'. $item->{'name'});
 	while (my ($k, $v) = each %$item) {
 		next if ($k eq 'body');
 
-		print OUT ($k, ': ', Encode::encode('utf-8', $v), "\n");
+		print OUT ($k, ': ', Encode::encode(ENCODING, $v), "\n");
 	}
 	print OUT "\n", $out_body;
 	close OUT;
@@ -52,14 +56,14 @@ sub load_item {
 
 		last if ($line =~ /^\s*$/o);
 
-		my $in_line = Encode::decode('utf-8', $line);
+		my $in_line = Encode::decode(ENCODING, $line);
 		my ($name, $content) = split(/:\s+/o, $in_line, 2);
 		$item->{$name} = $content;
 	}
 
 	my $body = '';
 	while (my $line = <IN>) {
-		$body .= Encode::decode('utf-8', $line);
+		$body .= Encode::decode(ENCODING, $line);
 	}
 	$item->{body} = $body;
 	close IN;

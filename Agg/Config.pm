@@ -51,6 +51,9 @@ sub get_config_by_id {
     # где находятся картинки относительно readdir
     $self->{'imgdir'} ||= 'img';
 
+	# encoding - кодировка выходных файлов
+	$self->{'encoding'} ||= 'utf-8';
+
 	return $self;
 }
 

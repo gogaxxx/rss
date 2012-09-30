@@ -54,7 +54,6 @@ sub check_and_create_db {
         # создаём пустой мастер и пустой db
         open(MASTER, '>'.$guidmaster);
         close MASTER;
-        unlink($db_filename);
         $need_remake = 1;
     }
     elsif (-e $guidmaster 
@@ -73,6 +72,7 @@ sub check_and_create_db {
 
     if ($need_remake) {
         warn "Rebuilding database...\n";
+        unlink($db_filename);
         my %guids;
         tie %guids, 'AnyDBM_File', $self->{guidsfile}, O_CREAT|O_RDWR, 0666;
 

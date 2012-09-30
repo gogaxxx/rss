@@ -10,7 +10,7 @@ our $config_dir = "$root/config";
 # type  - тип, например, atom или rss - используется для определения,
 #           какой парсер применять
 # url   - урл
-my @fields = qw( name type url);
+my @fields = qw(type url);
 
 # get_config_by_id #+++1
 sub get_config_by_id {
@@ -34,6 +34,8 @@ sub get_config_by_id {
 	}
 
     # формируем поля по-умолчанию
+    $self->{name} ||= $id; # гарантировано уникальное, лол
+
 	# кеш - где хранятся скачанные rss
 	$self->{cache} ||= $self->{config_dir}.'/cache';
 

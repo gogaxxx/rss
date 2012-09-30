@@ -17,6 +17,9 @@ MAIN: {
 	$cfg->{content} = Agg::Download->mirror($cfg->{url},
 											$cfg->{cache});
 
+	open(NEWS, '>'.$cfg->{'news'}) || die("Can't open $cfg->{news}:$!");
+	close NEWS;
+
 	my $parser = Agg::Parser->new($cfg);
 	$parser->parse();
 }

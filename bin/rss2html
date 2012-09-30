@@ -10,16 +10,39 @@ use Agg::Config;
 use Agg::Item;
 use Agg::Transform;
 
+use Getopt::Std;
+
 MAIN: {
+	my %opts;
+
+#pods#+++
+=head2 OPTIONS
+
+=over
+
+=item -a
+
+Load ALL items in master index (by default load only new items)
+
+=back
+
+=cut
+#---
+
+	getopts('a', \%opts);
 	my $feed_id = $ARGV[0] || die("Specify feed id");
 
 	my $cfg = Agg::Config->get_config_by_id($feed_id);
 
 	# грузим master
+	my $index = 
+		$opts{'a'}
+			? $cfg->{'master'}
+			: $cfg->{'news'};
 	my @master = ();
-	open(MASTER, '<'.$cfg->{master}) 
-		|| die("Can't open ".$cfg->{master}.": $!");
-	while (my $line = <MASTER>) {
+	open(INDEX, '<'.$index) 
+		|| die("Can't open ".$index.": $!");
+	while (my $line = <INDEX>) {
 		chomp $line;
 
 		# XXX возможно добавить фильтрацию по времени, например
@@ -27,7 +50,7 @@ MAIN: {
 		push @master,
 			[ split(/\s+/o, $line, 3) ];
 	}
-	close MASTER;
+	close INDEX;
 
 	# сортируем по времени
 	@master = sort { $a->[0] <=> $b->[0] } @master;

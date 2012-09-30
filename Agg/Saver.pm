@@ -19,7 +19,6 @@ sub new {
 		mkdir($cfg->{items_dir})
 			or die("[Agg::Saver::RSS] can't create $cfg->{items_dir}: $!");
 	}
-	$self->{master} = $self->{cfg}{master};
 	$self->{guidsfile}  = $self->{cfg}{config_dir}.'/guids';
 
 	$self->check_and_create_db();
@@ -40,7 +39,7 @@ sub new {
 sub check_and_create_db {
 	my $self = shift;
 
-	my $guidmaster = $self->{master};
+	my $guidmaster = $self->{cfg}{master};
 	my $db_filename  = $self->{guidsfile};
 	#my $db_filename = $cfg::guiddatabase.'.db';
 
@@ -121,7 +120,8 @@ sub save_item_data {
 	my $self=shift;
 	my $item=shift;
 
-	$self->_save_item_data_to_file($item, $self->{'master'});
+	$self->_save_item_data_to_file($item, $self->{'cfg'}{'master'});
+	$self->_save_item_data_to_file($item, $self->{'cfg'}{'news'});
 }
 
 # _save_item_data_to_file #+++1

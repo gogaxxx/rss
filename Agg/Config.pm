@@ -65,6 +65,10 @@ sub get_config_by_id {
 	# такие как время и гуид
 	$self->{master} ||= $self->{config_dir}.'/master';
 
+	# news - указатель аналогичный master но там содержатся не все
+	# итемы, а только новые со времени последнего запуска
+	$self->{'news'} ||= $self->{config_dir}.'/news';
+
 	return $self;
 }
 

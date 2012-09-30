@@ -12,16 +12,35 @@ use constant CONFIG_DIR => ROOT.'/config';
 # url   - урл
 my @fields = qw(type url);
 
+# get_global_config #+++1
+sub get_global_config {
+	my $class=shift;
+
+	my $self = bless {
+		config_dir => CONFIG_DIR,
+	}, $class;
+    $self->read_file(CONFIG_DIR.'/config');
+
+	# readdir - где находятся готовые файлы для чтения человеком
+	$self->{'readdir'} ||= $self->{config_dir}.'/read';
+    # где находятся картинки относительно readdir
+    $self->{'imgdir'} ||= 'img';
+
+	# encoding - кодировка выходных файлов
+	$self->{'encoding'} ||= 'utf-8';
+
+	return $self;
+}
+
 # get_config_by_id #+++1
 sub get_config_by_id {
 	my $class=shift;
 	my $id = shift;
 
-	my $self = bless {}, $class;
+	my $self = $class->get_global_config();
 
 	$self->{config_dir} = CONFIG_DIR.'/'.$id;
 	my $config_filename = $self->{config_dir}.'/config';
-    $self->read_file(CONFIG_DIR.'/config');
     $self->read_file($config_filename);
 
     # считываем конфигурируемые пользователем поля из файла
@@ -45,14 +64,6 @@ sub get_config_by_id {
 	# master - указатель для итемов, в нём содержатся данные по итемам,
 	# такие как время и гуид
 	$self->{master} ||= $self->{config_dir}.'/master';
-
-	# readdir - где находятся готовые файлы для чтения человеком
-	$self->{'readdir'} ||= $self->{config_dir}.'/read';
-    # где находятся картинки относительно readdir
-    $self->{'imgdir'} ||= 'img';
-
-	# encoding - кодировка выходных файлов
-	$self->{'encoding'} ||= 'utf-8';
 
 	return $self;
 }

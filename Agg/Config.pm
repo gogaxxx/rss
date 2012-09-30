@@ -29,6 +29,12 @@ sub get_global_config {
 	# encoding - кодировка выходных файлов
 	$self->{'encoding'} ||= 'utf-8';
 
+	# date format
+	$self->{'date-format'} ||= '%Y-%m-%d %T %z';
+
+	# user agent
+	$self->{'user-agent'} ||= 'Mozilla/5.0';
+
 	return $self;
 }
 

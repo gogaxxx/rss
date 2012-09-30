@@ -8,7 +8,7 @@ use warnings;
 
 use Agg::Config;
 use Agg::Item;
-use Agg::Transform::LocalImages;
+use Agg::Transform;
 
 MAIN: {
 	my $feed_id = $ARGV[0] || die("Specify feed id");
@@ -33,7 +33,7 @@ MAIN: {
 	@master = sort { $a->[0] <=> $b->[0] } @master;
 
     my $itemizer = Agg::Item->new($cfg);
-    my $transform = Agg::Transform::LocalImages->new($cfg);
+    my $transform = Agg::Transform->new($cfg);
 
     my $outfile = $cfg->{readdir}.'/'.$cfg->{name}.'.html';
 	open(OUT, '>'.$outfile) || die("Can't open $outfile: $!");

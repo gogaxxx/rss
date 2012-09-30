@@ -44,11 +44,14 @@ sub transform_item {
     my $item = shift;
 
     my $parser = $self->{parser};
-
+	
+	$parser->{'used-images'} = {};
     $parser->{OUTPUT} = '';
 	$parser->parse($item->{body});
     $parser->eof();
 	$item->{body} = $parser->{OUTPUT};
+	$item->{'used-images'} = join(',', 
+		keys %{$parser->{'used-images'}});
 
     return $item;
 }
@@ -75,6 +78,7 @@ sub load_img {
     warn "url=".$attr->{src}."\n";
     $self->{transformer}{loader}->mirror($url, $full_path);
     my $text = '<img src="'.$self->{'transformer'}{'imgurl'}.'/'.$filename.'">';
+	$self->{'used-images'}{$filename} = 1;
 
     return $text;
 }

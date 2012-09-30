@@ -28,7 +28,6 @@ MAIN: {
         mkdir($root.'/'.$dir) || die("Can't create dir $dir: $!");
         open (CFG, '>'.$root.'/'.$dir.'/config')
             || die("Can't open cfg file: $!");
-        print CFG "name=some name\n";
         print CFG "url=$url\n";
         print CFG "type=$type\n";
         close CFG;

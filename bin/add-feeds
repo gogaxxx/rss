@@ -28,38 +28,39 @@ MAIN: {
 		print("Add $url ...");
 
 		eval {
-	my $dir = md5_hex($url);
-	mkdir($root.'/'.$dir) || die("Can't create dir $dir: $!");
+			my $dir = md5_hex($url);
+			mkdir($root.'/'.$dir) || die("Can't create dir $dir: $!");
 
-	my $config = $root.'/'.$dir.'/config';
-	my $cache  = $root.'/'.$dir.'/cache';
+			my $config = $root.'/'.$dir.'/config';
+			my $cache  = $root.'/'.$dir.'/cache';
 
-	my $content = Agg::Download->mirror($url, $cache);
+			my $content = Agg::Download->mirror($url, $cache);
 
-	$parser->setHandlers(
-		Start => \&xml_start_detect,
-		End		=> \&xml_end);
-	@stack = ();
-	undef $type;
-	undef $name;
+			$parser->setHandlers(
+				Start => \&xml_start_detect,
+				End		=> \&xml_end);
+			@stack = ();
+			undef $type;
+			undef $name;
 
-	$parser->parse($content);
+			$parser->parse($content);
 
-	open (CFG, '>'.$config)
-		|| die("Can't open config file $config: $!");
-	if (defined ($name) && length($name) > 0) {
-		print CFG Encode::encode($cfg->{'encoding'}, "name=$name\n");
+			open (CFG, '>'.$config)
+				|| die("Can't open config file $config: $!");
+			if (defined ($name) && length($name) > 0) {
+				print CFG Encode::encode($cfg->{'encoding'},
+					"name=$name\n");
+			}
+			print CFG "url=$url\n";
+			print CFG "type=$type\n";
+			close CFG;
+
+			print "success\n";
+		};
+		if ($@) {
+			print "FAIL: $@\n";
+		}
 	}
-	print CFG "url=$url\n";
-	print CFG "type=$type\n";
-	close CFG;
-
-	print "success\n";
-};
-if ($@) {
-	print "FAIL: $@\n";
-}
-}
 }
 
 #+++1 xml_start_detect

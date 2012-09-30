@@ -3,8 +3,8 @@ package Agg::Config;
 use strict;
 use warnings;
 
-our $root = '/home/nephrite/rss';
-our $config_dir = "$root/config";
+use constant ROOT => '/home/nephrite/rss';
+use constant CONFIG_DIR => ROOT.'/config';
 
 # name  - название ленты
 # type  - тип, например, atom или rss - используется для определения,
@@ -19,9 +19,9 @@ sub get_config_by_id {
 
 	my $self = bless {}, $class;
 
-	$self->{config_dir} = $config_dir.'/'.$id;
+	$self->{config_dir} = CONFIG_DIR.'/'.$id;
 	my $config_filename = $self->{config_dir}.'/config';
-    $self->read_file($config_dir.'/config');
+    $self->read_file(CONFIG_DIR.'/config');
     $self->read_file($config_filename);
 
     # считываем конфигурируемые пользователем поля из файла

@@ -4,9 +4,11 @@
 package Agg::Transform::LocalImages;
 
 use strict;
+use warnings;
+
+use Agg::Download;
 use Digest::MD5 qw(md5_hex);
 use HTML::Parser;
-use LWP::UserAgent;
 
 # new #+++1 
 sub new {
@@ -15,8 +17,7 @@ sub new {
 
     my $self = bless {}, $class;
 
-	my $ua = LWP::UserAgent->new();
-	$ua->env_proxy;
+	my $ua = Agg::Download->new($cfg);
 
     my $parser = HTML::Parser->new(
 		xml_mode => 1,
@@ -30,6 +31,10 @@ sub new {
     $self->{parser} = $parser;
 
     $self->{parser}{transformer} = $self;
+
+	if ($self->{cfg}{url} =~ m{^http://([^/]+)}o) {
+		$self->{host} = $1;
+	}
 
     $self->{'imgurl'} = $cfg->{'imgdir'};
     $self->{'imgdir'} = $cfg->{'readdir'}.'/'.$cfg->{'imgdir'};
@@ -71,12 +76,15 @@ sub load_img {
     my ($self, $attr) = @_;
 
     my $url = $attr->{src};
+	unless ($url =~ m{^http(s?)://}) {
+		$url = 'http://'.$self->{'transformer'}{'host'}.$url;
+	}
     my $filename = md5_hex($url);
     my $full_path =
         $self->{transformer}{'imgdir'}.'/'.$filename;
     warn "filename=$filename\n";
-    warn "url=".$attr->{src}."\n";
-    $self->{transformer}{loader}->mirror($url, $full_path);
+    warn "url=".$url."\n";
+    $self->{transformer}{loader}->mirror($url, $full_path, 0);
     my $text = '<img src="'.$self->{'transformer'}{'imgurl'}.'/'.$filename.'">';
 	$self->{'used-images'}{$filename} = 1;
 

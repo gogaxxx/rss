@@ -9,17 +9,31 @@ use constant DEBUG=>0;
 
 use strict;
 
-sub mirror {
+# new #+++1
+sub new {
 	my $class=shift;
+	my ($cfg)=@_;
+
+	my $ua = LWP::UserAgent->new();
+	$ua->env_proxy;
+	$ua->agent($cfg->{'user-agent'});
+
+	my $self = bless {
+		ua => $ua,
+		cfg => $cfg}, $class;
+
+	return $self;
+}
+
+#mirror #+++1
+sub mirror {
+	my $self=shift;
 	my ($url, $filename, $return_content)=@_;
 
 	$return_content //= 1;
 
-	my $ua = LWP::UserAgent->new();
-	$ua->env_proxy;
-
 	warn "getting [$url]" if (DEBUG);
-	my $response = $ua->mirror($url, $filename);
+	my $response = $self->{'ua'}->mirror($url, $filename);
 
 	if ($response->is_success 
 			or $response->code eq '304') {

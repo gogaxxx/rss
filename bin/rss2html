@@ -9,8 +9,8 @@ use warnings;
 use Agg::Config;
 use Agg::Item;
 use Agg::Transform;
-
 use Getopt::Std;
+use POSIX qw(strftime);
 
 MAIN: {
 	my %opts;
@@ -61,13 +61,17 @@ Load ALL items in master index (by default load only new items)
     my $outfile = $cfg->{readdir}.'/'.$cfg->{name}.'.html';
 	open(OUT, '>'.$outfile) || die("Can't open $outfile: $!");
     
+	my $enc = $cfg->{'encoding'};
     for my $i (@master) {
         my $item = $itemizer->load_item($i->[1]);
         $transform->transform_item($item);
 
-        # XXX вместо utf-8 сделать конфигурируемый параметр
-        print OUT Encode::encode($cfg->{'encoding'}, '<h1>'.$item->{subject}.'<br></h1>');
-        print OUT Encode::encode($cfg->{'encoding'}, '<div class=body>'.$item->{body}.'</div>');
+        print OUT Encode::encode($enc, '<h1>'.$item->{subject}.'<br></h1>');
+		print OUT 
+			'<span class=date>['
+			. strftime($cfg->{'date-format'}, localtime($item->{'time'}))
+			. ']</span><br>';
+        print OUT Encode::encode($enc, '<div class=body>'.$item->{body}.'</div>');
         print OUT "<hr>\n";
     }
     close OUT;

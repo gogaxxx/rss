@@ -14,15 +14,20 @@ our $name;
 my @stack;
 
 MAIN: {
-    my $url = $ARGV[0];
+	$|=1;
 
-    unless ($url) {
-        die("Specify url");
+    unless (@ARGV) {
+        die("Specify one or more urls\n");
     }
 
 	my $cfg = Agg::Config->get_global_config();
 	my $root = $cfg->{config_dir};
+	my $parser = XML::Parser->new();
 
+	for my $url (@ARGV) {
+		print("Add $url ...");
+
+		eval {
 	my $dir = md5_hex($url);
 	mkdir($root.'/'.$dir) || die("Can't create dir $dir: $!");
 
@@ -31,11 +36,13 @@ MAIN: {
 
 	my $content = Agg::Download->mirror($url, $cache);
 
-	my $parser = XML::Parser->new();
 	$parser->setHandlers(
 		Start => \&xml_start_detect,
 		End		=> \&xml_end);
 	@stack = ();
+	undef $type;
+	undef $name;
+
 	$parser->parse($content);
 
 	open (CFG, '>'.$config)
@@ -47,7 +54,12 @@ MAIN: {
 	print CFG "type=$type\n";
 	close CFG;
 
-	print "Successfully added\n\n";
+	print "success\n";
+};
+if ($@) {
+	print "FAIL: $@\n";
+}
+}
 }
 
 #+++1 xml_start_detect

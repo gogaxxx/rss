@@ -48,6 +48,8 @@ sub get_config_by_id {
 
 	# readdir - где находятся готовые файлы для чтения человеком
 	$self->{'readdir'} ||= $self->{config_dir}.'/read';
+    # где находятся картинки относительно readdir
+    $self->{'imgdir'} ||= 'img';
 
 	return $self;
 }

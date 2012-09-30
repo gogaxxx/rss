@@ -4,6 +4,7 @@
 package Agg::Transform::LocalImages;
 
 use strict;
+use Digest::MD5 qw(md5_hex);
 use HTML::Parser;
 use LWP::UserAgent;
 
@@ -29,7 +30,10 @@ sub new {
     $self->{parser} = $parser;
 
     $self->{parser}{transformer} = $self;
-    $self->{parser}{img_number} = 1;
+
+    $self->{'imgurl'} = $cfg->{'imgdir'};
+    $self->{'imgdir'} = $cfg->{'readdir'}.'/'.$cfg->{'imgdir'};
+    mkdir($self->{'imgdir'}); # fail silently
 
     return $self;
 }
@@ -63,13 +67,14 @@ sub start {
 sub load_img {
     my ($self, $attr) = @_;
 
-    my $filename =
-        $self->{transformer}{cfg}{'readdir'}.'/'.$self->{img_number};
+    my $url = $attr->{src};
+    my $filename = md5_hex($url);
+    my $full_path =
+        $self->{transformer}{'imgdir'}.'/'.$filename;
     warn "filename=$filename\n";
     warn "url=".$attr->{src}."\n";
-    $self->{transformer}{loader}->mirror($attr->{src}, $filename);
-    my $text = '<img src="'.$self->{img_number}.'">';
-    $self->{img_number} ++;
+    $self->{transformer}{loader}->mirror($url, $full_path);
+    my $text = '<img src="'.$self->{'transformer'}{'imgurl'}.'/'.$filename.'">';
 
     return $text;
 }

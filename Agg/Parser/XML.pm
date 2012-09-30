@@ -3,7 +3,7 @@ package Agg::Parser::XML;
 use strict;
 
 use base qw(Agg::Parser::Super);
-use Agg::Saver::RSS;
+use Agg::Saver;
 use XML::Parser;
 
 sub init_parser {
@@ -13,7 +13,7 @@ sub init_parser {
 
 sub init_saver {
 	my $self=shift;
-	return Agg::Saver::RSS->new(@_);
+	return Agg::Saver->new(@_);
 }
 
 #---1

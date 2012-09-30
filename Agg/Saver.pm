@@ -1,6 +1,7 @@
 package Agg::Saver;
 
 use strict;
+use Agg::Item;
 use AnyDBM_File;
 use Fcntl qw(:DEFAULT :flock :seek);
 
@@ -25,6 +26,9 @@ sub new {
 	my %guids;
 	my $dbo = tie %guids, 'AnyDBM_File', $self->{guidsfile}, O_CREAT|O_RDWR, 0666;
 	$self->{guids} = \%guids;
+
+	$self->{itemizer} = Agg::Item->new($self->{cfg});
+    $self->{item_num} = $self->get_saved_id();
 
 	return $self;
 }
@@ -90,6 +94,25 @@ sub check_and_create_db {
     }
 }
 
+### save_item ####+++1
+sub save_item {
+	my $self=shift;
+    my ($item)=@_;
+
+	my $guids = $self->{guids};
+
+	return if ($guids->{$item->{guid}});
+
+	$guids->{$item->{guid}} = 1;
+	$item->{name} = $self->{item_num};
+	$self->{itemizer}->save_item($item);
+
+	$self->save_item_data($item);
+
+    print($self->{item_num}, ' ');
+	$self->{item_num}++;
+}
+
 ### save_item_data ####### #+++1
 #
 # write one item data to index file
@@ -98,8 +121,17 @@ sub save_item_data {
 	my $self=shift;
 	my $item=shift;
 
-	open (OUT, '>>', $self->{master})
-		|| die("Can't open $self->{master}: $!");
+	$self->_save_item_data_to_file($item, $self->{'master'});
+}
+
+# _save_item_data_to_file #+++1
+sub _save_item_data_to_file {
+	my $self=shift;
+	my $item=shift;
+	my $indexfile = shift;
+
+	open (OUT, '>>', $indexfile)
+		|| die("Can't open $indexfile: $!");
 	flock(OUT, LOCK_EX) or die("Can't flock: $!");
 	seek(OUT, 0, SEEK_END) or die("Can't seek: $!");
 	print OUT $item->{'time'}, ' ', 
@@ -117,7 +149,33 @@ sub finish {
 	untie %{$self->{guids}};
 }
 
-sub save_id {}
+### get_saved_id ####+++1
+sub get_saved_id {
+	my $self=shift;
+
+    if (open(IN, '<'.$self->{cfg}{config_dir}.'/number')) {
+        my $id = <IN>;
+        close IN;
+
+        while (-e $self->{cfg}{items_dir}.'/'.$id) {
+            $id++;
+        }
+        return $id || 1; 
+    }
+    else {
+        return 1;
+    }
+}
+
+### save_id ####+++1
+sub save_id {
+	my $self=shift;
+
+    if (open(OUT, '>'.$self->{cfg}{config_dir}.'/number')) {
+        print OUT $self->{item_num};
+        close OUT;
+    }
+}
 
 #---1
 

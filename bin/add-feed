@@ -1,8 +1,11 @@
 #!/usr/bin/perl
 
+use strict;
+use warnings;
+
 use Agg::Config;
+use Agg::Download;
 use Digest::MD5 qw(md5_hex);
-use LWP::UserAgent;
 use XML::Parser;
 
 our $type;
@@ -14,29 +17,26 @@ MAIN: {
         die("Specify url");
     }
 
-    my $ua = LWP::UserAgent->new();
-    $ua->env_proxy();
-    my $response = $ua->get($url);  
+	my $root = Agg::Config->CONFIG_DIR;
+	my $dir = md5_hex($url);
+	mkdir($root.'/'.$dir) || die("Can't create dir $dir: $!");
 
-    if ($response->is_success) {
-        my $parser = XML::Parser->new();
-        $parser->setHandlers(Start => \&xml_start_detect);
-        $parser->parse($response->content);
+	my $config = $root.'/'.$dir.'/config';
+	my $cache  = $root.'/'.$dir.'/cache';
 
-        my $root = $Agg::Config::config_dir;
-        $dir = md5_hex($url);
-        mkdir($root.'/'.$dir) || die("Can't create dir $dir: $!");
-        open (CFG, '>'.$root.'/'.$dir.'/config')
-            || die("Can't open cfg file: $!");
-        print CFG "url=$url\n";
-        print CFG "type=$type\n";
-        close CFG;
+	my $content = Agg::Download->mirror($url, $cache);
 
-        print "Successfully added\n\n";
-    }
-    else {
-        die($response->status_line);
-    }
+	my $parser = XML::Parser->new();
+	$parser->setHandlers(Start => \&xml_start_detect);
+	$parser->parse($content);
+
+	open (CFG, '>'.$config)
+		|| die("Can't open config file $config: $!");
+	print CFG "url=$url\n";
+	print CFG "type=$type\n";
+	close CFG;
+
+	print "Successfully added\n\n";
 }
 
 #+++1 xml_start_detect

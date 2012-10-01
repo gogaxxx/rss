@@ -9,7 +9,7 @@ use constant DEBUG=>0;
 
 use constant GZIP => q{/usr/bin/gzip -S '' -f -d };
 use constant DOWNLOAD_CMD =>
-	'/usr/bin/curl -v -R --url %1$s -o %2$s -z %2$s';
+	'/usr/bin/curl -s -R --url %1$s -o %2$s -z %2$s';
 
 use strict;
 

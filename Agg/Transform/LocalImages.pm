@@ -82,8 +82,6 @@ sub load_img {
     my $filename = md5_hex($url);
     my $full_path =
         $self->{transformer}{'imgdir'}.'/'.$filename;
-    warn "filename=$filename\n";
-    warn "url=".$url."\n";
     $self->{transformer}{loader}->mirror($url, $full_path, 0);
     my $text = '<img src="'.$self->{'transformer'}{'imgurl'}.'/'.$filename.'">';
 	$self->{'used-images'}{$filename} = 1;

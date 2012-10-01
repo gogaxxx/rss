@@ -7,6 +7,8 @@ package Agg::Download;
 use LWP::UserAgent;
 use constant DEBUG=>0;
 
+use constant GZIP => q{/usr/bin/gzip -S '' -f -d };
+
 use strict;
 
 # new #+++1
@@ -37,6 +39,12 @@ sub mirror {
 
 	if ($response->is_success 
 			or $response->code eq '304') {
+
+		if ($response->{'_headers'}{'content-encoding'} eq 'gzip') {
+			warn 'GZIPPED!';
+			system(GZIP.' '.$filename);
+		}
+
 		if ($return_content) {
 			my $content = '';
 			open(FILE, '<'.$filename) ||

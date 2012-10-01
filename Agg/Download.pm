@@ -47,7 +47,7 @@ sub mirror {
 	if ($return_content) {
 		my $content = '';
 		open(FILE, '<'.$filename) ||
-			die("[Comics::mirror] Can't open $filename: $!");
+			die("[Agg::Download::mirror] Can't open $filename: $!");
 		$content = join('', <FILE>);
 		close FILE;
 		return $content;

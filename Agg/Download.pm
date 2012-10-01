@@ -8,6 +8,8 @@ use LWP::UserAgent;
 use constant DEBUG=>0;
 
 use constant GZIP => q{/usr/bin/gzip -S '' -f -d };
+use constant DOWNLOAD_CMD =>
+	'/usr/bin/curl -v -R --url %1$s -o %2$s -z %2$s';
 
 use strict;
 
@@ -35,28 +37,29 @@ sub mirror {
 	$return_content //= 1;
 
 	warn "getting [$url]" if (DEBUG);
-	my $response = $self->{'ua'}->mirror($url, $filename);
+	$self->_mirror_download($url, $filename);
 
-	if ($response->is_success 
-			or $response->code eq '304') {
+#		if ($response->{'_headers'}{'content-encoding'} eq 'gzip') {
+#			warn 'GZIPPED!';
+#			system(GZIP.' '.$filename);
+#		}
 
-		if ($response->{'_headers'}{'content-encoding'} eq 'gzip') {
-			warn 'GZIPPED!';
-			system(GZIP.' '.$filename);
-		}
-
-		if ($return_content) {
-			my $content = '';
-			open(FILE, '<'.$filename) ||
-				die("[Comics::mirror] Can't open $filename: $!");
-			$content = join('', <FILE>);
-			close FILE;
-			return $content;
-		}
+	if ($return_content) {
+		my $content = '';
+		open(FILE, '<'.$filename) ||
+			die("[Comics::mirror] Can't open $filename: $!");
+		$content = join('', <FILE>);
+		close FILE;
+		return $content;
 	}
-	else {
-		die ("Can't get $url: ", $response->status_line);
-	}
+}
+
+sub _mirror_download {
+	my $self=shift;
+	my ($url, $filename)=@_;
+
+	system(sprintf('/usr/bin/curl -s -R --url %1$s -o %2$s -z %2$s',
+			$url, $filename));
 }
 
 1;

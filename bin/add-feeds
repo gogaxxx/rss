@@ -50,7 +50,7 @@ MAIN: {
 			open (CFG, '>'.$config)
 				|| die("Can't open config file $config: $!");
 			if (defined ($name) && length($name) > 0) {
-				$name =~ s{[/<>&|:;]}{_}go;
+				$name =~ s{[/\<\>\&\|\?\!:;]}{_}go;
 				print CFG Encode::encode($cfg->{'encoding'},
 					"name=$name\n");
 			}

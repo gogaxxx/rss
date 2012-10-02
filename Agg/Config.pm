@@ -87,8 +87,10 @@ sub read_file {
 		or die("Can't open $config_filename: $!");
 	while(my $line = <FILE>) {
 		chomp $line;
+		$line =~ s/^\s+|\s+$//go;
+		next if ($line eq '' || substr($line, 0, 1) eq '#');
 
-		my @pair = split(/=/, $line, 2);
+		my @pair = split(/\s*=\s*/, $line, 2);
         
         # заменяем переменные
         $pair[1] =~ s/\$\{[^\}]+\}/$self->{$1}/g;

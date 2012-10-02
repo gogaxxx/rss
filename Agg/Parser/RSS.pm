@@ -58,7 +58,7 @@ sub rss_end {
 		$expat->{saver}->save_item({
                         subject => $item->{title},
                         date    => $item->{pubDate} 
-									|| $item->{'dc:date'}, 
+									|| $item->{'dc:date'} || '', 
                         body    => $item->{'content:encoded'} 
 									|| $item->{description},
                         guid    => $guid,

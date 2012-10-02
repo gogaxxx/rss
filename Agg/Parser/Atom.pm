@@ -61,7 +61,8 @@ sub atom_end {
 									|| $item->{modified} 
 									|| $item->{updated} 
                                     || $item->{published}
-									|| $item->{issued},
+									|| $item->{issued}
+									|| '',
                         body    => $item->{content}
                                     || $item->{summary},
                         guid    => $guid,

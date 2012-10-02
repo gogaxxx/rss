@@ -58,8 +58,8 @@ sub _mirror_download {
 	my $self=shift;
 	my ($url, $filename)=@_;
 
-	system(sprintf('/usr/bin/curl -s -R --url %1$s -o %2$s -z %2$s',
-			$url, $filename));
+	my $cmd= sprintf(DOWNLOAD_CMD, $url, $filename);
+	system($cmd);
 }
 
 1;

@@ -9,6 +9,7 @@ use warnings;
 use Agg::Download;
 use Digest::MD5 qw(md5_hex);
 use HTML::Parser;
+use constant DEBUG => 1;
 
 # new #+++1 
 sub new {
@@ -83,7 +84,12 @@ sub load_img {
     my $full_path =
         $self->{transformer}{'imgdir'}.'/'.$filename;
     $self->{transformer}{loader}->mirror($url, $full_path, 0);
-    my $text = '<img src="'.$self->{'transformer'}{'imgurl'}.'/'.$filename.'">';
+
+	$attr->{src} = $self->{'transformer'}{'imgurl'}.'/'.$filename;
+	my $text = '<img '.
+		join(' ', map {$_.'="'.$attr->{$_}.'"'} keys %$attr).'>';
+
+	warn "[Agg::Download::load_img] text=$text" if (DEBUG);
 	$self->{'used-images'}{$filename} = 1;
 
     return $text;

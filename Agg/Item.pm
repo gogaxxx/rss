@@ -35,6 +35,9 @@ sub save_item {
     open (OUT, '>' . $self->{cfg}{items_dir} . '/'. $item->{'name'});
 	while (my ($k, $v) = each %$item) {
 		next if ($k eq 'body');
+		#if (!defined($v)) {
+			#warn "[Agg::Item] undefined key $k";
+		#}
 
 		print OUT ($k, ': ', Encode::encode(ENCODING, $v), "\n");
 	}

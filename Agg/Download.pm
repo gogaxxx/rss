@@ -9,7 +9,7 @@ use constant DEBUG=>0;
 
 use constant GZIP => q{/usr/bin/gzip -S '' -f -d };
 use constant DOWNLOAD_CMD =>
-	'curl -s -LR --url %1$s -o %2$s -z %2$s';
+	'curl -s -LR --url %url -o %file -z %file';
 
 use strict;
 
@@ -22,9 +22,24 @@ sub new {
 	$ua->env_proxy;
 	$ua->agent($cfg->{'user-agent'});
 
+	my $cmd_tpl = $cfg->{'download-command'} || DOWNLOAD_CMD;
+	my @cmd = split(/\s+/o, $cmd_tpl);
+	my @urlpos=();
+	my @filepos=();
+	for (my $i=0; $i<@cmd; $i++) {
+		if ($cmd[$i] eq '%url') {
+			push @urlpos, $i;
+		}
+		elsif ($cmd[$i] eq '%file') {
+			push @filepos, $i;
+		}
+	}
+
 	my $self = bless {
 		ua => $ua,
-		cmd_tpl => $cfg->{'download-command'} || DOWNLOAD_CMD,
+		cmd_tpl => \@cmd,
+		filepos => \@filepos,
+		urlpos	=> \@urlpos,
 		cfg => $cfg}, $class;
 
 	return $self;
@@ -60,16 +75,24 @@ sub _mirror_download {
 	my $self=shift;
 	my ($url, $filename)=@_;
 
-	my $cmd= sprintf($self->{'cmd_tpl'}, $url, $filename);
-	warn "cmd=$cmd" if (DEBUG);
-	system($cmd);
+	my $cmd=$self->{cmd_tpl};
+
+	for my $f (@{$self->{'filepos'}}) {
+		$cmd->[$f] = $filename;
+	}
+	for my $u (@{$self->{'urlpos'}}) {
+		$cmd->[$u] = $url;
+	}
+
+	warn "cmd=".join(':', @$cmd) if (DEBUG);
+	system(@$cmd);
 
 	if ($? == -1) {
-		die "failed to execute $cmd: $!"; }
+		die "failed to execute: $!"; }
 	elsif ($? & 127) {
 		# чтоб сдыхала сразу при нажатии ^C
-		die("'$cmd' died with signal %d, %s coredump\n",
-		   ($? & 127),  ($? & 128) ? 'with' : 'without');
+		die(sprintf("cmd died with signal %d, %s coredump\n",
+		   ($? & 127),  ($? & 128) ? 'with' : 'without'));
 	}
 }
 

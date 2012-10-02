@@ -55,6 +55,7 @@ sub mirror {
 	}
 }
 
+### _mirror_download ####### #+++1
 sub _mirror_download {
 	my $self=shift;
 	my ($url, $filename)=@_;
@@ -62,6 +63,16 @@ sub _mirror_download {
 	my $cmd= sprintf($self->{'cmd_tpl'}, $url, $filename);
 	warn "cmd=$cmd" if (DEBUG);
 	system($cmd);
+
+	if ($? == -1) {
+		die "failed to execute $cmd: $!"; }
+	elsif ($? & 127) {
+		# чтоб сдыхала сразу при нажатии ^C
+		die("'$cmd' died with signal %d, %s coredump\n",
+		   ($? & 127),  ($? & 128) ? 'with' : 'without');
+	}
 }
+
+#---1
 
 1;

@@ -9,7 +9,7 @@ use constant DEBUG=>0;
 
 use constant GZIP => q{/usr/bin/gzip -S '' -f -d };
 use constant DOWNLOAD_CMD =>
-	'/usr/bin/curl -s -LR --url %1$s -o %2$s -z %2$s';
+	'curl -s -LR --url %1$s -o %2$s -z %2$s';
 
 use strict;
 
@@ -24,6 +24,7 @@ sub new {
 
 	my $self = bless {
 		ua => $ua,
+		cmd_tpl => $cfg->{'download-command'} || DOWNLOAD_CMD,
 		cfg => $cfg}, $class;
 
 	return $self;
@@ -58,7 +59,8 @@ sub _mirror_download {
 	my $self=shift;
 	my ($url, $filename)=@_;
 
-	my $cmd= sprintf(DOWNLOAD_CMD, $url, $filename);
+	my $cmd= sprintf($self->{'cmd_tpl'}, $url, $filename);
+	warn "cmd=$cmd" if (DEBUG);
 	system($cmd);
 }
 

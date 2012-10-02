@@ -9,7 +9,7 @@ use warnings;
 use Agg::Download;
 use Digest::MD5 qw(md5_hex);
 use HTML::Parser;
-use constant DEBUG => 1;
+use constant DEBUG => 0;
 
 # new #+++1 
 sub new {

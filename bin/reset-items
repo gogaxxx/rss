@@ -1,0 +1,6 @@
+#!/bin/sh
+
+cd /home/nephrite/rss/config
+rm */master
+rm */news
+rm */items/*

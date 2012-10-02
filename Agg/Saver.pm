@@ -2,8 +2,10 @@ package Agg::Saver;
 
 use strict;
 use Agg::Item;
-use AnyDBM_File;
+use GDBM_File;
 use Fcntl qw(:DEFAULT :flock :seek);
+
+use constant DBCLASS => 'GDBM_File';
 
 sub new {
 	my $class=shift;
@@ -23,7 +25,7 @@ sub new {
 
 	$self->check_and_create_db();
 	my %guids;
-	my $dbo = tie %guids, 'AnyDBM_File', $self->{guidsfile}, O_CREAT|O_RDWR, 0666;
+	my $dbo = tie %guids, DBCLASS, $self->{guidsfile}, O_CREAT|O_RDWR, 0666;
 	$self->{guids} = \%guids;
 
 	$self->{itemizer} = Agg::Item->new($self->{cfg});
@@ -77,7 +79,7 @@ sub check_and_create_db {
         warn "Rebuilding database...\n";
         unlink($db_filename);
         my %guids;
-        tie %guids, 'AnyDBM_File', $self->{guidsfile}, O_CREAT|O_RDWR, 0666;
+        tie %guids, DBCLASS, $self->{guidsfile}, O_CREAT|O_RDWR, 0666;
 
         if (open(MASTER, '<'.$guidmaster)) {
             while (my $line = <MASTER>) {
@@ -102,11 +104,11 @@ sub save_item {
 
 	return if ($guids->{$item->{guid}});
 
-	$guids->{$item->{guid}} = 1;
 	$item->{name} = $self->{item_num};
 	$self->{itemizer}->save_item($item);
 
 	$self->save_item_data($item);
+	$guids->{$item->{guid}} = 1;
 
     print($self->{item_num}, ' ');
 	$self->{item_num}++;

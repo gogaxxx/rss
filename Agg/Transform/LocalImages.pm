@@ -81,9 +81,7 @@ sub load_img {
 	unless ($url =~ m{^http(s?)://}) {
 		$url = 'http://'.$self->{'transformer'}{'host'}.$url;
 	}
-	warn "0";
     my $filename = md5_hex(Encode::encode($self->{'transformer'}{'cfg'}{'encoding'}, $url)); # дурь
-	warn "1";
     my $full_path =
         $self->{transformer}{'imgdir'}.'/'.$filename;
     $self->{transformer}{loader}->mirror($url, $full_path, 0);

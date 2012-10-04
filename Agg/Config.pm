@@ -17,6 +17,7 @@ sub get_global_config {
 	my $class=shift;
 
 	my $self = bless {
+		root => ROOT,
 		config_dir => CONFIG_DIR,
 	}, $class;
     $self->read_file(CONFIG_DIR.'/config');

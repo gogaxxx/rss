@@ -67,8 +67,10 @@ B<t>o time - load items newer than specified date
 	}
 	close INDEX;
 
-	my $outfile = $cfg->{'readdir'}.'/'.$cfg->{'name'}.'.html';
-	unlink($outfile);
+	my $outfile = $cfg->{'readdir'}.'/'
+		.$cfg->{'name'}
+		.strftime('-%Y-%m-%dT%T', localtime())
+		.'.html';
 
 	if (@master) {
 		# сортируем по времени

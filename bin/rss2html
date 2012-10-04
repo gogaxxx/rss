@@ -9,6 +9,7 @@ use warnings;
 use Agg::Config;
 use Agg::Item;
 use Agg::Transform;
+use Date::Parse;
 use Getopt::Std;
 use POSIX qw(strftime);
 
@@ -22,17 +23,28 @@ MAIN: {
 
 =item -a
 
-Load ALL items in master index (by default load only new items)
+Load B<A>LL items in master index (by default load only new items)
+
+=item -f <datetime>
+
+B<f>rom time - load items older than specified date
+
+=item -t <datetime>
+
+B<t>o time - load items newer than specified date
 
 =back
 
 =cut
 #---
 
-	getopts('a', \%opts);
+	getopts('af:t:', \%opts);
 	my $feed_id = $ARGV[0] || die("Specify feed id");
 
 	my $cfg = Agg::Config->get_config_by_id($feed_id);
+
+	my $from_time = get_from_time($opts{'f'});
+	my $to_time   = get_to_time($opts{'t'});
 
 	# грузим master
 	my $index = 
@@ -45,10 +57,13 @@ Load ALL items in master index (by default load only new items)
 	while (my $line = <INDEX>) {
 		chomp $line;
 
-		# XXX возможно добавить фильтрацию по времени, например
+		my @data = split(/\s+/o, $line, 3);
 
-		push @master,
-			[ split(/\s+/o, $line, 3) ];
+		if ($data[0] >= $from_time
+			&& $data[0] <= $to_time)
+		{
+			push @master, \@data;
+		}
 	}
 	close INDEX;
 
@@ -79,4 +94,28 @@ Load ALL items in master index (by default load only new items)
 		}
 		close OUT;
 	}
+}
+
+### get_from_time ####### #+++1
+sub get_from_time {
+	return _get_time(shift) // 0;
+}
+
+### get_to_time ####### #+++1
+sub get_to_time {
+	return _get_time(shift) // time();
+}
+
+### _get_time ####### #+++1
+sub _get_time {
+	my $raw = shift;
+
+	my $time;
+	if (defined($raw) && length($raw)>0) {
+		$time = str2time($raw);
+		unless (defined($time)) {
+			warn "failed to parse $raw as date-time, using default";
+		}
+	}
+	return $time;
 }

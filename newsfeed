@@ -1,20 +1,27 @@
 #!/bin/sh
 
 ROOT=/home/nephrite/rss
-MAXF=100
+BIN=$ROOT/bin
 
-cd $ROOT/feeds
-echo See progress with tail -f $ROOT/wget-log
-wget --user-agent='Mozilla' -t 3 -T 20 -N -x -o $ROOT/wget-log -i $ROOT/list 
-cd $ROOT
+cd $ROOT/config
 
-rm -f $ROOT/items/new
-if [ -e last_run ]; then
-	find $ROOT/feeds -type f -newer last_run | xargs -L $MAXF $ROOT/parser
-else
-	find $ROOT/feeds -type f | xargs -L $MAXF $ROOT/parser
-fi
+FROM=''
+TO=''
+while getopts f:t: OPT; do
+	case $OPT in
+		f) FROM="-f $OPTARG"
+		;;
+		t) TO="-t $OPTARG"
+		;;
+	esac
+done
 
-touch last_run
+export PERL5LIB=$ROOT
+for feed in *
+do
+	if [ $feed != 'config' ]; then
+		$BIN/aggregator $feed
+		$BIN/rss2html $FROM $TO $feed
+	fi
+done
 
-$ROOT/sorter news

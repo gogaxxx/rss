@@ -69,7 +69,7 @@ B<t>o time - load items newer than specified date
 
 	my $outfile = $cfg->{'readdir'}.'/'
 		.$cfg->{'name'}
-		.strftime('-%Y-%m-%dT%T', localtime())
+		.strftime('-%Y-%m-%d-%H%M%S', localtime())
 		.'.html';
 
 	if (@master) {

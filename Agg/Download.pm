@@ -5,8 +5,8 @@
 package Agg::Download;
 
 use Digest::MD5 qw(md5_hex);
+use Encode;
 use File::Path qw(make_path);
-use LWP::UserAgent;
 use constant DEBUG=>0;
 
 use constant GZIP => q{/usr/bin/gzip -S '' -f -d };
@@ -19,10 +19,6 @@ use strict;
 sub new {
 	my $class=shift;
 	my ($cfg)=@_;
-
-	my $ua = LWP::UserAgent->new();
-	$ua->env_proxy;
-	$ua->agent($cfg->{'user-agent'});
 
 	my $cmd_tpl = $cfg->{'download-command'} || DOWNLOAD_CMD;
 	my @cmd = split(/\s+/o, $cmd_tpl);
@@ -38,7 +34,6 @@ sub new {
 	}
 
 	my $self = bless {
-		ua => $ua,
 		cmd_tpl => \@cmd,
 		filepos => \@filepos,
 		urlpos	=> \@urlpos,
@@ -76,7 +71,20 @@ sub prepare {
 	my ($url)=@_;
 
 	unless ($url =~ m{^http(s?)://}) {
-		$url = 'http://'.$self->{'transformer'}{'host'}.$url;
+		$url = 'http://'.$url;
+	}
+
+	my ($host, $uri);
+	if ($url =~ m{^http(?:s?)://([^/]+)(.*)$}) {
+		$host = $1;
+		$uri  = $2;
+	}
+
+	if ($uri =~ /(\.[^\.]+)$/) {
+		$self->{'extension'} = $1;
+	}
+	else {
+		$self->{'extension'} = '';
 	}
 	$self->{'url'} = $url;
 
@@ -84,7 +92,7 @@ sub prepare {
 	$self->{'hash'} = $hash;
 	my $dir1 = substr($hash, 0, 2);
 	my $dir2 = substr($hash, 2, 2);
-	my $filename = substr($hash, 4);
+	my $filename = substr($hash, 4).$self->{'extension'};
 	my $dir = $self->{'root'}.'/'.$dir1.'/'.$dir2;
 	$self->{'dir'} = $dir;
 
@@ -96,12 +104,12 @@ sub prepare {
 	$self->{'full_path'} = $full_path;
 }
 
-# load #+++1 
+# fetch_cached #+++1 
 #
 # всегда грузит локальную копию если она есть
 # если нет, скачивает с урла
 #
-sub load {
+sub fetch_cached {
 	my $self=shift;
 	my $url = shift;
 
@@ -110,7 +118,6 @@ sub load {
 	if (!-e $filename) {
 		$self->_mirror_download($url, $filename);
 	}
-
 	return _slurp($filename);
 }
 
@@ -118,7 +125,7 @@ sub load {
 #
 # загрузить актуальную версию с урла, всегда проверяет на изменение
 #
-sub fetch {
+sub fetch_recent {
 	my $self=shift;
 	my $url = shift;
 
@@ -128,28 +135,13 @@ sub fetch {
 	return _slurp($filename);
 }
 
-# cache #+++1 
-#
-# загрузить актуальную версию с урла, всегда проверяет на изменение, но
-# содержимое не возвращает
-#
-sub cache {
-	my $self=shift;
-	my $url=shift;
-
-	$self->prepare($url);
-	my $filename = $self->{'full_path'};
-	$self->_mirror_download($url, $filename);
-	return $filename;
-}
-
 # _slurp #+++1
 sub _slurp {
 	my $filename = shift;
 
 	my $content = '';
 	open(FILE, '<'.$filename) ||
-		die("[Agg::Download::mirror] Can't open $filename: $!");
+		die("[Agg::Download::_slurp] Can't open $filename: $!");
 	$content = join('', <FILE>);
 	close FILE;
 

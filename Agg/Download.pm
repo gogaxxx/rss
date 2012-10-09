@@ -113,12 +113,20 @@ sub fetch_cached {
 	my $self=shift;
 	my $url = shift;
 
+	$self->cache($url);
+	return _slurp($self->{'full_path'});
+}
+
+# cache #+++1
+sub cache {
+	my $self=shift;
+	my $url = shift;
+
 	$self->prepare($url);
 	my $filename = $self->{'full_path'};
 	if (!-e $filename) {
 		$self->_mirror_download($url, $filename);
 	}
-	return _slurp($filename);
 }
 
 # fetch #+++1
@@ -134,6 +142,9 @@ sub fetch_recent {
 	$self->_mirror_download($url, $filename);
 	return _slurp($filename);
 }
+
+# accessors #+++1 
+sub full_path { shift->{'full_path'}}
 
 # _slurp #+++1
 sub _slurp {

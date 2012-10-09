@@ -28,15 +28,14 @@ MAIN: {
 	for my $url (@ARGV) {
 		print("Add $url ...");
 
-		my ($config, $cache, $dir);
+		my ($config, $dir);
 		eval {
 			$dir = md5_hex($url);
 			mkdir($root.'/'.$dir) || die("Can't create dir $dir: $!");
 
 			$config = $root.'/'.$dir.'/config';
-			$cache  = $root.'/'.$dir.'/cache';
 
-			my $content = $loader->mirror($url, $cache);
+			my $content = $loader->fetch_recent($url);
 
 			$parser->setHandlers(
 				Start => \&xml_start_detect,
@@ -62,7 +61,6 @@ MAIN: {
 		};
 		if ($@) {
 			unlink($config);
-			unlink($cache);
 			rmdir($dir);
 			print "FAIL: $@\n";
 		}

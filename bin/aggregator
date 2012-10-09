@@ -16,8 +16,7 @@ MAIN: {
 	my $cfg = Agg::Config->get_config_by_id($id);
 	print $cfg->{name}, ' ';
 	my $loader = Agg::Download->new($cfg);
-	$cfg->{content} = $loader->mirror($cfg->{url},
-										$cfg->{cache});
+	$cfg->{'content'} = $loader->fetch_recent($cfg->{'url'});# XXX не засовывать в cfg!
 
 	open(NEWS, '>'.$cfg->{'news'}) || die("Can't open $cfg->{news}:$!");
 	close NEWS;

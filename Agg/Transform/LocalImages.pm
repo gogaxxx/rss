@@ -8,9 +8,9 @@ use warnings;
 
 use Agg::Download;
 use Digest::MD5 qw(md5_hex);
-use Encode;
+use File::Copy;
 use HTML::Parser;
-use constant DEBUG => 0;
+use constant DEBUG => 1;
 
 # new #+++1 
 sub new {
@@ -78,13 +78,12 @@ sub load_img {
     my ($self, $attr) = @_;
 
     my $url = $attr->{src};
-	unless ($url =~ m{^http(s?)://}) {
-		$url = 'http://'.$self->{'transformer'}{'host'}.$url;
-	}
-    my $filename = md5_hex(Encode::encode($self->{'transformer'}{'cfg'}{'encoding'}, $url)); # дурь
+	my $loader = $self->{transformer}{loader};
+	$loader->cache($url);
+	my $filename = $loader->{'hash'};
     my $full_path =
         $self->{transformer}{'imgdir'}.'/'.$filename;
-    $self->{transformer}{loader}->mirror($url, $full_path, 0);
+	copy($loader->full_path, $full_path);
 
 	$attr->{src} = $self->{'transformer'}{'imgurl'}.'/'.$filename;
 	my $text = '<img '.

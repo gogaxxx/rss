@@ -20,8 +20,9 @@ sub new {
 # parse #+++1
 sub parse {
 	my $self=shift;
+	my $content = shift;
 
-	$self->{parser}->parse($self->{cfg}{content});
+	$self->{parser}->parse($content);
 	$self->{saver}->finish();
 }
 

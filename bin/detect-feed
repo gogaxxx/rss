@@ -6,7 +6,8 @@
 use strict;
 use warnings;
 
-use LWP::UserAgent;
+use Agg::Config;
+use Agg::Download;
 use HTML::Parser;
 
 MAIN: {
@@ -16,35 +17,24 @@ MAIN: {
 		die("Specify an URL\n");
 	}
 
-	unless ($url =~ m{^http://}) {
-		$url = 'http://'.$url;
+	my $cfg = Agg::Config->get_global_config();
+	my $loader = Agg::Download->new($cfg);
+
+	my $content = $loader->fetch_recent($url);
+
+	print "$url :\n";
+
+	my $parser = HTML::Parser->new(
+		start_h => [ \&start_tag, "self,tagname,attr"]
+	);
+	$parser->{'rss_detected'} = 0;
+
+	$parser->parse($content);
+
+	unless ($parser->{'rss_detected'}) {
+		print "\tNo feeds on this page\n";
 	}
-
-	my $ua = LWP::UserAgent->new();
-#	print $ENV{HTTP_PROXY};
-	$ua->env_proxy;
-
-	my $response = $ua->get($url);
-
-	if ($response->is_success) {
-		my $content = $response->decoded_content;
-		print "$url :\n";
-
-		my $parser = HTML::Parser->new(
-			start_h => [ \&start_tag, "self,tagname,attr"]
-		);
-		$parser->{'rss_detected'} = 0;
-
-		$parser->parse($content);
-
-		unless ($parser->{'rss_detected'}) {
-			print "\tNo feeds on this page\n";
-		}
-		print "\n";
-	}
-	else {
-		die("Can't fetch \"$url\": ", $response->status_line,"\n");
-	}
+	print "\n";
 }
 
 sub start_tag {

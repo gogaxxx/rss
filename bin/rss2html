@@ -13,6 +13,8 @@ use Date::Parse;
 use Getopt::Std;
 use POSIX qw(strftime);
 
+use constant MAX_LINK_LEN => 60;
+
 MAIN: {
 	my %opts;
 
@@ -86,12 +88,21 @@ B<t>o time - load items newer than specified date
 			my $item = $itemizer->load_item($i->[1]);
 			$transform->transform_item($item);
 
+			my $display_link = length($item->{'link'}) > MAX_LINK_LEN
+				? substr($item->{'link'}, 0, MAX_LINK_LEN).'...'
+				: $item->{'link'};
+			my $link_code =
+				'<span class=link> Link:'
+				.q{<a href="}.$item->{'link'}.q{">}.$display_link.q{</a></span><br>};
+
 			print OUT Encode::encode($enc, '<h1>'.$item->{subject}.'<br></h1>');
 			print OUT 
 				'<span class=date>['
 				. strftime($cfg->{'date-format'}, localtime($item->{'time'}))
 				. ']</span><br>';
+			print OUT $link_code;
 			print OUT Encode::encode($enc, '<div class=body>'.$item->{body}.'</div>');
+			print OUT $link_code;
 			print OUT "<hr>\n";
 		}
 		close OUT;

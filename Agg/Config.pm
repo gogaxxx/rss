@@ -44,6 +44,11 @@ sub get_config_by_id {
 	my $class=shift;
 	my $id = shift;
 
+	if ($id =~ m{([^/]+)$}o) {
+		$id = $1;
+		warn 'id=',$id;
+	}
+
 	my $self = $class->get_global_config();
 
 	$self->{config_dir} = CONFIG_DIR.'/'.$id;
@@ -95,6 +100,8 @@ sub read_file {
         
         # заменяем переменные
         $pair[1] =~ s/\$\{[^\}]+\}/$self->{$1}/g;
+		# подставляем переменные из вышестоящего конфига
+        $pair[1] =~ s/\$SUPER/$self->{$pair[0]}/g;
 
 		$self->{$pair[0]} = $pair[1];
 	}

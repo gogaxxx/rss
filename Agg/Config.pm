@@ -46,7 +46,6 @@ sub get_config_by_id {
 
 	if ($id =~ m{([^/]+)$}o) {
 		$id = $1;
-		warn 'id=',$id;
 	}
 
 	my $self = $class->get_global_config();
@@ -97,7 +96,7 @@ sub read_file {
 		next if ($line eq '' || substr($line, 0, 1) eq '#');
 
 		my @pair = split(/\s*=\s*/, $line, 2);
-        
+
         # заменяем переменные
         $pair[1] =~ s/\$\{[^\}]+\}/$self->{$1}/g;
 		# подставляем переменные из вышестоящего конфига

@@ -28,6 +28,7 @@ MAIN: {
 		start_h => [ \&start_tag, "self,tagname,attr"]
 	);
 	$parser->{'rss_detected'} = 0;
+	$parser->{'base_url'} = url_domain($url);
 
 	$parser->parse($content);
 
@@ -48,8 +49,25 @@ sub start_tag {
 			print "\tURL\t\tType\n";
 			print "\t-----------------------------------\n";
 		}
-		print "\t", $tag_attrs->{'href'}, "\t\t", $tag_attrs->{'type'}, "\n";
+		print "\t", full_url($tag_attrs->{'href'}, $parser->{'base_url'}),
+				"\t\t", $tag_attrs->{'type'}, "\n";
 
 		$parser->{'rss_detected'} = 1;
 	}
+}
+
+sub url_domain {
+	my $url = shift;
+
+	if ($url =~ m{^(http[s]?://[^/]+)}o) {
+		return $1.'/';
+	}
+}
+
+sub full_url {
+	my ($url, $base_url)=@_;
+
+	$url =~ m{^http[s]?://}
+		? $url
+		: $base_url.$url;
 }

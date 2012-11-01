@@ -57,7 +57,7 @@ MAIN: {
 			print CFG "type=$type\n";
 			close CFG;
 
-			print "success\n";
+			print "success: $dir\n";
 		};
 		if ($@) {
 			unlink($config);

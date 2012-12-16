@@ -49,12 +49,6 @@ sub mirror {
 	my ($url, $filename, $return_content)=@_;
 
 	$url ||= $self->{'url'};
-	$filename ||= $self->{'full_path'};
-	$return_content //= 1;
-
-	warn "getting [$url]" if (DEBUG);
-	$self->_mirror_download($url, $filename);
-
 #		if ($response->{'_headers'}{'content-encoding'} eq 'gzip') {
 #			warn 'GZIPPED!';
 #			system(GZIP.' '.$filename);
@@ -129,7 +123,7 @@ sub cache {
 	}
 }
 
-# fetch #+++1
+# fetch_recent #+++1
 #
 # загрузить актуальную версию с урла, всегда проверяет на изменение
 #

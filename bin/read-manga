@@ -12,34 +12,13 @@ my $cfg = Agg::Config->get_config_by_id($id);
 my $chapter = $ARGV[1] || die("Specify chapter");
 my $page = $ARGV[2] // die("Specify page");
 
-my $tpurl   = $cfg->{tpurl};
-my $pattern = $cfg->{pattern};
 my $tfile   = $cfg->{filename};
 my $imgdir  = $cfg->{imgdir};
 my $tviewer = $cfg->{viewer};
 my $start   = $cfg->{start};
 
-my $regexp = qr{$pattern};
-
-my $downloader = Agg::Download->new($cfg);
-my $parser = HTML::Parser->new(
-	start_h => [ \&tag_start, 'self,tagname,attr']);
-$parser->{regexp} = $regexp;
-
 while(1) {
-	my $page_url = sprintf($tpurl, $start+$chapter, $page, $chapter);
-
-	#my $content = $downloader->fetch_recent($page_url);
-	print "Loading page...";
-	my $content = $downloader->fetch_cached($page_url);
-	print "success\n";
-
-	$parser->{res} = '';
-	$parser->parse($content);
-	my $img_url = $parser->{res};
-	print ("Loading image: ", $img_url, "...");
-	$downloader->cache($img_url);
-	print ("success\n");
+	my $full_path = get_page_and_image($cfg, $chapter, $page);
 
 	my $filename = $tfile;
 	my $fchapter = sprintf('%.4d', $chapter);
@@ -51,11 +30,29 @@ while(1) {
 	my $res_name = $imgdir.'/'.$filename;
 	#print "res_name=$res_name\n";
 	#print "downloader->full_path=".$downloader->full_path;
-	copy($downloader->full_path, $res_name);
+	if (-d $res_name) {
+		die("$res_name is a directory, must be filename");
+	}
+	if (!-e $res_name) {
+		copy($full_path, $res_name);
+	}
 	my $viewer = $tviewer;
 	# TODO: сделать как в Agg::Download
 	$viewer =~ s/\%file\b/$res_name/g;
-	system($viewer);
+	#$SIG{CHLD} = \&REAPER;
+	if (fork()) {
+		system($viewer);
+
+		while(wait() > 0) {
+			# wait
+		}
+	}
+	else {
+		for (my $i = 1; $i<=$cfg->{preload}; $i++) {
+			get_page_and_image($cfg, $chapter, $page+$i);
+		}
+		exit();
+	}
 
 	print "next page: ", $page+1, "\n";
 	print q{Enter to continue, b to go back, q to quit> };
@@ -72,6 +69,31 @@ while(1) {
 	}
 }
 
+### get_page_and_image ####### #+++1
+sub get_page_and_image {
+	my ($cfg, $chapter, $page) = @_;
+
+	my $pattern = $cfg->{pattern};
+	my $regexp = qr{$pattern};
+
+	my $downloader = Agg::Download->new($cfg);
+	my $parser = HTML::Parser->new(
+		start_h => [ \&tag_start, 'self,tagname,attr']);
+	$parser->{regexp} = $regexp;
+
+	my $page_url = sprintf($cfg->{tpurl}, $start+$chapter, $page, $chapter);
+	my $content = $downloader->fetch_cached($page_url);
+
+	$parser->{res} = '';
+	$parser->parse($content);
+	my $img_url = $parser->{res};
+	print ("Loading image: ", $img_url, "...");
+	$downloader->cache($img_url);
+	print ("success\n");
+
+	return $downloader->full_path;
+}
+
 # tag_start #+++1
 sub tag_start {
 	my ($self, $tagname, $attr) = @_;
@@ -83,4 +105,10 @@ sub tag_start {
 			$self->eof;
 		}
 	}
+}
+
+### REAPER ####### #+++1
+sub REAPER {
+	wait();
+	$SIG{CHLD} = \&REAPER;
 }

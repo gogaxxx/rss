@@ -86,6 +86,11 @@ sub get_page_and_image {
 	$parser->{regexp} = $regexp;
 
 	my $page_url = sprintf($cfg->{tpurl}, $start+$chapter, $page, $chapter);
+	my $page_url = $cfg->{tpurl};
+	my $composed = $start+$chapter;
+	$page_url =~ s/\%composed/$composed/g;
+	$page_url =~ s/\%page/$page/g;
+	$page_url =~ s/\%chapter/$chapter/g;
 	my $content = $downloader->fetch_cached($page_url);
 
 	$parser->{res} = '';

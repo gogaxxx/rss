@@ -18,7 +18,7 @@ my $tviewer = $cfg->{viewer};
 my $start   = $cfg->{start};
 
 while(1) {
-	my $full_path = get_page_and_image($cfg, $chapter, $page);
+	my $full_path = get_page_and_image($cfg, $chapter, $page, 'want-feedback');
 
 	my $filename = $tfile;
 	my $fchapter = sprintf('%.4d', $chapter);
@@ -39,16 +39,14 @@ while(1) {
 	my $viewer = $tviewer;
 	# TODO: сделать как в Agg::Download
 	$viewer =~ s/\%file\b/$res_name/g;
-	#$SIG{CHLD} = \&REAPER;
 	if (fork()) {
+		$SIG{CHLD}=\&REAPER;
 		system($viewer);
-
-		while(wait() > 0) {
-			# wait
-		}
 	}
 	else {
+		$SIG{CHLD}='IGNORE';
 		for (my $i = 1; $i<=$cfg->{preload}; $i++) {
+		sleep(1);
 			get_page_and_image($cfg, $chapter, $page+$i);
 		}
 		exit();
@@ -71,7 +69,7 @@ while(1) {
 
 ### get_page_and_image ####### #+++1
 sub get_page_and_image {
-	my ($cfg, $chapter, $page) = @_;
+	my ($cfg, $chapter, $page, $feedback) = @_;
 
 	my $pattern = $cfg->{pattern};
 	my $regexp = qr{$pattern};
@@ -87,9 +85,9 @@ sub get_page_and_image {
 	$parser->{res} = '';
 	$parser->parse($content);
 	my $img_url = $parser->{res};
-	print ("Loading image: ", $img_url, "...");
+	print ("Loading image: ", $img_url, "...") if ($feedback);
 	$downloader->cache($img_url);
-	print ("success\n");
+	print ("success\n") if ($feedback);
 
 	return $downloader->full_path;
 }
@@ -107,8 +105,7 @@ sub tag_start {
 	}
 }
 
-### REAPER ####### #+++1
 sub REAPER {
 	wait();
-	$SIG{CHLD} = \&REAPER;
+	$SIG{CHLD}=\&REAPER;
 }

@@ -7,6 +7,7 @@ package Agg::Download;
 use Digest::MD5 qw(md5_hex);
 use Encode;
 use File::Path qw(make_path);
+use POSIX qw(:errno_h);
 use constant DEBUG=>0;
 
 use constant GZIP => q{/usr/bin/gzip -S '' -f -d };
@@ -171,7 +172,8 @@ sub _mirror_download {
 	system(@$cmd);
 
 	if ($? == -1) {
-		die "failed to execute: $!"; }
+		die "failed to execute: $!" if ($! != ECHILD);
+	}
 	elsif ($? & 127) {
 		# чтоб сдыхала сразу при нажатии ^C
 		die(sprintf("cmd died with signal %d, %s coredump\n",

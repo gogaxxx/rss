@@ -14,6 +14,10 @@ sub new {
 	my $type = $cfg->{type};
 	my $class = $parsers{$type};
 
+	if (!defined($class)) {
+		die("Unknown type: $type");
+	}
+
 	eval "require $class";
 	return $class->new($cfg);
 }

@@ -159,6 +159,7 @@ sub _mirror_download {
 	my $self=shift;
 	my ($url, $filename)=@_;
 
+	warn "url=$url" if (DEBUG);
 	my $cmd=$self->{cmd_tpl};
 
 	for my $f (@{$self->{'filepos'}}) {

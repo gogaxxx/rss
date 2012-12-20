@@ -1,5 +1,6 @@
 #!/bin/sh
 
+feed=$1
 ROOT=/home/nephrite/rss
 BIN=$ROOT/bin
 
@@ -16,13 +17,8 @@ while getopts f:t: OPT; do
 	esac
 done
 
-rm $ROOT/read/*
-for feed in *
-do
-	if [ $feed != 'config' ]; then
-		$BIN/do-feed $FROM $TO $feed &
-	fi
-done
+export PERL5LIB=$ROOT
 
-wait
-echo All done
+echo $feed
+$BIN/aggregator $feed
+$BIN/rss2html $FROM $TO $feed

@@ -110,7 +110,7 @@ sub save_item {
 	$self->save_item_data($item);
 	$guids->{$item->{guid}} = 1;
 
-    print($self->{item_num}, ' ');
+    print($self->{item_num}, ' ') if ($self->{cfg}->{be_verbose});
 	$self->{item_num}++;
 }
 

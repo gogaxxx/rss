@@ -5,3 +5,4 @@ date-format=%Y-%m-%d %T %z
 user-agent=Mozilla/5.0
 download-command=curl -s -LR --url %url -o %file -z %file
 cache-root=/home/neprite/rss/cache
+be_verbose=0

@@ -14,7 +14,8 @@ MAIN: {
 	}
 
 	my $cfg = Agg::Config->get_config_by_id($id);
-	print $cfg->{name}, ' ';
+	my $be_verbose = $cfg->{be_verbose};
+	print $cfg->{name}, ' ' if ($be_verbose);
 	my $loader = Agg::Download->new($cfg);
 
 	open(NEWS, '>'.$cfg->{'news'}) || die("Can't open $cfg->{news}:$!");
@@ -22,5 +23,5 @@ MAIN: {
 
 	my $parser = Agg::Parser->new($cfg);
 	$parser->parse($loader->fetch_recent($cfg->{'url'}));
-	print "\n";
+	print "\n" if ($be_verbose);
 }

@@ -5,6 +5,7 @@ use Agg::Config;
 use Agg::Download;
 use File::Copy;
 use HTML::Parser;
+use constant DEBUG => 0;
 
 my $id = $ARGV[0]; # for example "Berserk"
 my $cfg = Agg::Config->get_config_by_id($id);
@@ -34,7 +35,8 @@ while(1) {
 		die("$res_name is a directory, must be filename");
 	}
 	if (!-e $res_name) {
-		copy($full_path, $res_name);
+		#copy($full_path, $res_name);
+		link($full_path, $res_name);
 	}
 	my $viewer = $tviewer;
 	# TODO: сделать как в Agg::Download
@@ -87,10 +89,12 @@ sub get_page_and_image {
 
 	my $page_url = sprintf($cfg->{tpurl}, $start+$chapter, $page, $chapter);
 	my $page_url = $cfg->{tpurl};
+	warn "page_url[1] = $page_url" if (DEBUG);
 	my $composed = $start+$chapter;
 	$page_url =~ s/\%composed/$composed/g;
 	$page_url =~ s/\%page/$page/g;
 	$page_url =~ s/\%chapter/$chapter/g;
+	warn "page_url[2] = $page_url" if (DEBUG);
 	my $content = $downloader->fetch_cached($page_url);
 
 	$parser->{res} = '';

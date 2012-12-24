@@ -1,7 +1,11 @@
 #!/bin/sh
 
-ROOT=/home/nephrite/rss
-BIN=$ROOT/bin
+export ROOT=/home/nephrite/rss
+export BIN=$ROOT/bin
+MAXPROCESSES=5
+
+#--------------------------------------
+let N=$MAXPROCESSES-1
 
 cd $ROOT/config
 
@@ -17,11 +21,16 @@ while getopts f:t: OPT; do
 done
 
 rm $ROOT/read/*
+i=1
 for feed in *
 do
 	if [ $feed != 'config' ]; then
 		$BIN/do-feed $FROM $TO $feed &
 	fi
+	if [ $[$i % MAXPROCESSES ] = $N ]; then
+		wait
+	fi
+	let i=$i+1
 done
 
 wait

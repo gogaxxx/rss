@@ -1,19 +1,22 @@
 #!/bin/sh
 
-feed=$1
-
 cd $ROOT/config
 
 FROM=''
 TO=''
 while getopts f:t: OPT; do
 	case $OPT in
-		f) FROM="-f $OPTARG"
+		f) FROM="-a -f $OPTARG"
+			shift
+			shift
 		;;
-		t) TO="-t $OPTARG"
+		t) TO="-a -t $OPTARG"
+			shift
+			shift
 		;;
 	esac
 done
+feed=$1
 
 export PERL5LIB=$ROOT
 

@@ -2,7 +2,7 @@
 
 export ROOT=/home/nephrite/rss
 export BIN=$ROOT/bin
-MAXPROCESSES=5
+MAXPROCESSES=20
 
 #--------------------------------------
 let N=$MAXPROCESSES-1
@@ -14,8 +14,10 @@ TO=''
 while getopts f:t: OPT; do
 	case $OPT in
 		f) FROM="-f $OPTARG"
+			echo FROM: $OPTARG
 		;;
 		t) TO="-t $OPTARG"
+			echo TO $OPTARG
 		;;
 	esac
 done
@@ -27,10 +29,11 @@ do
 	if [ $feed != 'config' ]; then
 		$BIN/do-feed $FROM $TO $feed &
 	fi
-	if [ $[$i % MAXPROCESSES ] = $N ]; then
+
+	if [ $i%$MAXPROCESSES=$N ]; then
 		wait
 	fi
-	let i=$i+1
+	let i=$i+1 >/dev/null
 done
 
 wait

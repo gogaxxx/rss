@@ -30,7 +30,8 @@ do
 		$BIN/do-feed $FROM $TO $feed &
 	fi
 
-	if [ $i%$MAXPROCESSES=$N ]; then
+	let rem=$i%$MAXPROCESSES >/dev/null
+	if [ $rem -eq $N ]; then
 		wait
 	fi
 	let i=$i+1 >/dev/null

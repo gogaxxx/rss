@@ -87,7 +87,6 @@ sub get_page_and_image {
 		start_h => [ \&tag_start, 'self,tagname,attr']);
 	$parser->{regexp} = $regexp;
 
-	my $page_url = sprintf($cfg->{tpurl}, $start+$chapter, $page, $chapter);
 	my $page_url = $cfg->{tpurl};
 	warn "page_url[1] = $page_url" if (DEBUG);
 	my $composed = $start+$chapter;

@@ -1,8 +1,20 @@
+# основной каталог в котором находятся файлы для чтения
 readdir=/home/nephrite/rss/read
+# кодировка выходных файлов
 encoding=utf-8
+# цепочка трансформации, применяемая к итему
 transform=HTML,LocalImages
+# формат даты в выходном файле
 date-format=%Y-%m-%d %T %z
+# юзер агент который надо указывать при скачивании
 user-agent=Mozilla/5.0
+# команда для скачивания
 download-command=curl -s -LR --url %url -o %file -z %file
+# где находится кеш
 cache-root=/home/neprite/rss/cache
+# нужно ли выдавать всякие информационные сообщения
 be_verbose=0
+# имя фида - также имя файла, по умолчанию совпадает с id
+# name=name
+# где находятся распарсеные итемы
+# items_dir=

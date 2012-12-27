@@ -18,12 +18,12 @@ sub get_global_config {
 
 	my $self = bless {
 		root => ROOT,
-		config_dir => CONFIG_DIR,
+		config-dir => CONFIG_DIR,
 	}, $class;
     $self->read_file(CONFIG_DIR.'/config');
 
 	# readdir - где находятся готовые файлы для чтения человеком
-	$self->{'readdir'} ||= $self->{config_dir}.'/read';
+	$self->{'readdir'} ||= $self->{config-dir}.'/read';
     # где находятся картинки относительно readdir
     $self->{'imgdir'} ||= 'img';
 
@@ -50,8 +50,8 @@ sub get_config_by_id {
 
 	my $self = $class->get_global_config();
 
-	$self->{config_dir} = CONFIG_DIR.'/'.$id;
-	my $config_filename = $self->{config_dir}.'/config';
+	$self->{config-dir} = CONFIG_DIR.'/'.$id;
+	my $config_filename = $self->{config-dir}.'/config';
     $self->read_file($config_filename);
 
     # считываем конфигурируемые пользователем поля из файла
@@ -67,18 +67,18 @@ sub get_config_by_id {
     $self->{name} ||= $id; # гарантировано уникальное, лол
 
 	# кеш - где хранятся скачанные rss
-	$self->{cache} ||= $self->{config_dir}.'/cache';
+	$self->{cache} ||= $self->{config-dir}.'/cache';
 
 	# где хранятся готовые итемы
-	$self->{items_dir} ||= $self->{config_dir}.'/items';
+	$self->{items_dir} ||= $self->{config-dir}.'/items';
 
 	# master - указатель для итемов, в нём содержатся данные по итемам,
 	# такие как время и гуид
-	$self->{master} ||= $self->{config_dir}.'/master';
+	$self->{master} ||= $self->{config-dir}.'/master';
 
 	# news - указатель аналогичный master но там содержатся не все
 	# итемы, а только новые со времени последнего запуска
-	$self->{'news'} ||= $self->{config_dir}.'/news';
+	$self->{'news'} ||= $self->{config-dir}.'/news';
 
 	return $self;
 }

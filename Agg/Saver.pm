@@ -21,7 +21,7 @@ sub new {
 		mkdir($cfg->{items_dir})
 			or die("[Agg::Saver::RSS] can't create $cfg->{items_dir}: $!");
 	}
-	$self->{guidsfile}  = $self->{cfg}{config_dir}.'/guids';
+	$self->{guidsfile}  = $self->{cfg}{config-dir}.'/guids';
 
 	$self->check_and_create_db();
 	my %guids;
@@ -155,7 +155,7 @@ sub finish {
 sub get_saved_id {
 	my $self=shift;
 
-    if (open(IN, '<'.$self->{cfg}{config_dir}.'/number')) {
+    if (open(IN, '<'.$self->{cfg}{config-dir}.'/number')) {
         my $id = <IN>;
         close IN;
 
@@ -173,7 +173,7 @@ sub get_saved_id {
 sub save_id {
 	my $self=shift;
 
-    if (open(OUT, '>'.$self->{cfg}{config_dir}.'/number')) {
+    if (open(OUT, '>'.$self->{cfg}{config-dir}.'/number')) {
         print OUT $self->{item_num};
         close OUT;
     }

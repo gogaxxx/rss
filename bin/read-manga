@@ -86,6 +86,7 @@ sub get_page_and_image {
 	my $parser = HTML::Parser->new(
 		start_h => [ \&tag_start, 'self,tagname,attr']);
 	$parser->{regexp} = $regexp;
+	warn "regexp=$regexp" if (DEBUG);
 
 	my $page_url = $cfg->{tpurl};
 	warn "page_url[1] = $page_url" if (DEBUG);
@@ -112,6 +113,7 @@ sub tag_start {
 
 	my $regexp = $self->{regexp};
 	if (lc($tagname) eq 'img') {
+		warn "src=".$attr->{src} if (DEBUG);
 		if ($attr->{src} =~ /$regexp/) {
 			$self->{res} = $attr->{src};
 			$self->eof;

@@ -30,7 +30,8 @@ sub save_item {
 			?  str2time($item->{date})
 			:  time();
 
-    my $out_body    = Encode::encode(ENCODING, $item->{body});
+	my $enc_obj = Encode::find_encoding(ENCODING);
+    my $out_body    = $enc_obj->encode($item->{body});
 
     open (OUT, '>' . $self->{cfg}{items_dir} . '/'. $item->{'name'});
 	while (my ($k, $v) = each %$item) {
@@ -39,7 +40,7 @@ sub save_item {
 			#warn "[Agg::Item] undefined key $k";
 		#}
 
-		print OUT ($k, ': ', Encode::encode(ENCODING, $v), "\n");
+		print OUT ($k, ': ', $enc_obj->encode($v), "\n");
 	}
 	print OUT "\n", $out_body;
 	close OUT;
@@ -54,19 +55,20 @@ sub load_item {
 	my $item = {};
 	open (IN, '<'.$filename) || die("Can't open $filename: $!");
 	# headers
+	my $enc_obj = Encode::find_encoding(ENCODING);
 	while (my $line = <IN>) {
 		chomp $line;
 
 		last if ($line =~ /^\s*$/o);
 
-		my $in_line = Encode::decode(ENCODING, $line);
+		my $in_line = $enc_obj->decode($line);
 		my ($name, $content) = split(/:\s+/o, $in_line, 2);
 		$item->{$name} = $content;
 	}
 
 	my $body = '';
 	while (my $line = <IN>) {
-		$body .= Encode::decode(ENCODING, $line);
+		$body .= $enc_obj->decode($line);
 	}
 	$item->{body} = $body;
 	close IN;

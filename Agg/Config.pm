@@ -3,8 +3,11 @@ package Agg::Config;
 use strict;
 use warnings;
 
+use Encode;
+
 use constant ROOT => '/home/nephrite/rss';
 use constant CONFIG_DIR => ROOT.'/config';
+use constant DEFAULT_ENCODING => 'utf-8';
 
 # name  - название ленты
 # type  - тип, например, atom или rss - используется для определения,
@@ -90,8 +93,12 @@ sub read_file {
 
 	open(FILE, '<', $config_filename)
 		or die("Can't open $config_filename: $!");
-	while(my $line = <FILE>) {
-		chomp $line;
+	my $enc_obj = Encode::find_encoding(DEFAULT_ENCODING); # XXX сделать
+															# определение кодировки
+	while(my $raw_line = <FILE>) {
+		chomp $raw_line;
+		my $line = $enc_obj->decode($raw_line);
+
 		$line =~ s/^\s+|\s+$//go;
 		next if ($line eq '' || substr($line, 0, 1) eq '#');
 

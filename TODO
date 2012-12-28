@@ -1,3 +1,4 @@
+* объединить read-manga и mangareader, вынести общий код в модули
 ! BUG: не грузятся картинки в approach-anxiety, coding-horror, lleo.me!
 ! BUG: в tiphareth кривые шрифты: если на странице более 1 итема, то
 	начиная со второго мелкий шрифт

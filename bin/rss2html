@@ -81,9 +81,12 @@ B<t>o time - load items newer than specified date
 		my $itemizer = Agg::Item->new($cfg);
 		my $transform = Agg::Transform->new($cfg);
 
-		open(OUT, '>'.$outfile) || die("Can't open $outfile: $!");
-		
 		my $enc = $cfg->{'encoding'};
+		open(OUT, '>'.$outfile) || die("Can't open $outfile: $!");
+		print OUT '<html><head><title>';
+		print OUT Encode::encode($enc, $cfg->{name});
+		print OUT '</title></head><body>';
+		
 		for my $i (@master) {
 			my $item = $itemizer->load_item($i->[1]);
 			$transform->transform_item($item);
@@ -105,6 +108,7 @@ B<t>o time - load items newer than specified date
 			print OUT $link_code;
 			print OUT "<hr>\n";
 		}
+		print OUT '</body></html>';
 		close OUT;
 	}
 }

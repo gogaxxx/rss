@@ -1,0 +1,182 @@
+#!/usr/bin/perl
+
+use strict;
+use Agg::Config;
+use Agg::Download;
+use File::Copy;
+use HTML::Parser;
+use constant DEBUG => 0;
+
+my $id = $ARGV[0]; # for example "Berserk"
+my $cfg = Agg::Config->get_config_by_id($id);
+
+my $chapter = $ARGV[1] || die("Specify chapter");
+my $page = $ARGV[2] // die("Specify page");
+
+my $tfile   = $cfg->{filename};
+my $imgdir  = $cfg->{imgdir};
+my $tviewer = $cfg->{viewer};
+my $start   = $cfg->{start};
+
+my $composed = get_composed($cfg, $chapter);
+$cfg->{composed} = $composed;
+
+while(1) {
+	my $full_path = get_page_and_image($cfg, $chapter, $page, 'want-feedback');
+
+	my $filename = $tfile;
+	my $fchapter = sprintf('%.4d', $chapter);
+	my $fpage    = sprintf('%.5d', $page);
+
+	my $filename = gsprintf($tfile, 
+						chapter => $fchapter,
+						page => $fpage);
+	#print "filename=$filename\n";
+	
+	my $res_name = $imgdir.'/'.$filename;
+	#print "res_name=$res_name\n";
+	#print "downloader->full_path=".$downloader->full_path;
+	if (-d $res_name) {
+		die("$res_name is a directory, must be filename");
+	}
+	if (!-e $res_name) {
+		#copy($full_path, $res_name);
+		link($full_path, $res_name);
+	}
+	# TODO: сделать как в Agg::Download
+	my $viewer = gsprintf($tviewer, file => $res_name);
+	if (fork()) {
+		$SIG{CHLD}=\&REAPER;
+		system($viewer);
+	}
+	else {
+		$SIG{CHLD}='IGNORE';
+		for (my $i = 1; $i<=$cfg->{preload}; $i++) {
+			get_page_and_image($cfg, $chapter, $page+$i);
+		}
+		exit();
+	}
+
+	print "next page: ", $page+1, "\n";
+	print q{Enter to continue, b to go back, q to quit> };
+	my $rc = <STDIN>;
+	chomp $rc;
+	$rc =~ s/\s+//go;
+	if ($rc eq 'q') {
+		# выход
+		exit;
+	}
+	elsif ($rc eq 'b') {
+		# назад
+		$page --;
+	}
+	elsif ($rc =~ /^\d+$/o) {
+		# номер страницы
+		$page = $rc;
+	}
+	else {
+		$page ++;
+	}
+}
+
+### get_page_and_image ####### #+++1
+sub get_page_and_image {
+	my ($cfg, $chapter, $page, $feedback) = @_;
+
+	my $pattern = $cfg->{pattern};
+	my $regexp = qr{$pattern};
+
+	my $downloader = Agg::Download->new($cfg);
+	my $parser = HTML::Parser->new(
+		start_h => [ \&tag_start, 'self,tagname,attr']);
+	$parser->{regexp} = $regexp;
+	warn "regexp=$regexp" if (DEBUG);
+
+	my $page_url = $cfg->{tpurl};
+	warn "page_url[1] = $page_url" if (DEBUG);
+	my $page_url = gsprintf($cfg->{tpurl}, 
+						composed => $cfg->{composed},
+						chapter => $chapter, 
+						page => $page);
+	warn "page_url[2] = $page_url" if (DEBUG);
+	my $content = $downloader->fetch_cached($page_url);
+
+	$parser->{res} = '';
+	$parser->parse($content);
+	my $img_url = $parser->{res};
+	print ("Loading image: ", $img_url, "...") if ($feedback);
+	$downloader->cache($img_url);
+	print ("success\n") if ($feedback);
+
+	return $downloader->full_path;
+}
+
+# tag_start #+++2
+sub tag_start {
+	my ($self, $tagname, $attr) = @_;
+
+	my $regexp = $self->{regexp};
+	if (lc($tagname) eq 'img') {
+		warn "src=".$attr->{src} if (DEBUG);
+		if ($attr->{src} =~ /$regexp/) {
+			$self->{res} = $attr->{src};
+			$self->eof;
+		}
+	}
+}
+
+# get_composed #+++1
+sub get_composed {
+	my ($cfg, $chapter)=@_;
+
+	my $pattern = $cfg->{pageuri};
+	my $regexp = qr{$pattern};
+
+	my $chapter_url = gsprintf($cfg->{url}, 
+						chapter => $chapter);
+
+	my $downloader = Agg::Download->new($cfg);
+	my $chapter_page = $downloader->fetch_cached($chapter_url);
+
+	my $parser = HTML::Parser->new(
+			start_h => [\&composed_start, 'self,tagname,attr']);
+	
+	$parser->{regexp} = $regexp;
+	$parser->{composed}='';
+	$parser->parse($chapter_page);
+
+	unless ($parser->{composed}) {
+		die("Can't get composed");
+	}
+	return $parser->{composed};
+}
+
+# composed_start #+++2
+sub composed_start {
+	my ($self, $tagname, $attr)=@_;
+
+	my $regexp = $self->{regexp};
+	if (lc($tagname) eq 'option') {
+		if ($attr->{value} =~ /$regexp/) {
+			$self->{composed} = $1;
+			$self->eof();
+		}
+	}
+}
+
+# gsprintf #+++1
+sub gsprintf {
+	my ($fmt, %params)=@_;
+
+	my $str = $fmt;
+	while (my ($k, $v) = each %params) {
+		$str =~ s/\%$k\%/$v/g;
+	}
+	return $str;
+}
+
+sub REAPER {
+	wait();
+	$SIG{CHLD}=\&REAPER;
+}
+

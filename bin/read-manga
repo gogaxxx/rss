@@ -21,11 +21,9 @@ my $start   = $cfg->{start};
 while(1) {
 	my $full_path = get_page_and_image($cfg, $chapter, $page, 'want-feedback');
 
-	my $filename = $tfile;
-	my $fchapter = sprintf('%.4d', $chapter);
-	my $fpage    = sprintf('%.5d', $page);
-	$filename =~ s/\%chapter\b/$fchapter/g;
-	$filename =~ s/\%page\b/$fpage/g;
+	my $filename = gsprintf($tfile,
+						chapter =>sprintf('%.4d', $chapter),
+						page =>sprintf('%.5d', $page));
 	#print "filename=$filename\n";
 	
 	my $res_name = $imgdir.'/'.$filename;
@@ -38,9 +36,8 @@ while(1) {
 		#copy($full_path, $res_name);
 		link($full_path, $res_name);
 	}
-	my $viewer = $tviewer;
 	# TODO: сделать как в Agg::Download
-	$viewer =~ s/\%file\b/$res_name/g;
+	my $viewer = gsprintf($tviewer, file => $res_name);
 	if (fork()) {
 		$SIG{CHLD}=\&REAPER;
 		system($viewer);
@@ -88,12 +85,10 @@ sub get_page_and_image {
 	$parser->{regexp} = $regexp;
 	warn "regexp=$regexp" if (DEBUG);
 
-	my $page_url = $cfg->{tpurl};
-	warn "page_url[1] = $page_url" if (DEBUG);
-	my $composed = $start+$chapter;
-	$page_url =~ s/\%composed/$composed/g;
-	$page_url =~ s/\%page/$page/g;
-	$page_url =~ s/\%chapter/$chapter/g;
+	my $page_url = gsprintf($cfg->{tpurl},
+					composed => $start+$chapter,
+					chapter => $chapter,
+					page => $page);
 	warn "page_url[2] = $page_url" if (DEBUG);
 	my $content = $downloader->fetch_cached($page_url);
 
@@ -121,6 +116,18 @@ sub tag_start {
 	}
 }
 
+# gsprintf #+++1
+sub gsprintf {
+	my ($fmt, %params)=@_;
+
+	my $str = $fmt;
+	while (my ($k, $v) = each %params) {
+		$str =~ s/\%$k\%/$v/g;
+	}
+	return $str;
+}
+
+# REAPER #+++1
 sub REAPER {
 	wait();
 	$SIG{CHLD}=\&REAPER;

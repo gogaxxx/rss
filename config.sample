@@ -1,5 +1,5 @@
 # основной каталог в котором находятся файлы для чтения
-readdir=/home/nephrite/rss/read
+read-dir=/home/nephrite/rss/read
 # кодировка выходных файлов
 encoding=utf-8
 # цепочка трансформации, применяемая к итему

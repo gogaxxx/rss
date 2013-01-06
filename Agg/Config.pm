@@ -25,9 +25,9 @@ sub get_global_config {
 	}, $class;
     $self->read_file(CONFIG_DIR.'/config');
 
-	# readdir - где находятся готовые файлы для чтения человеком
-	$self->{'readdir'} ||= $self->{'config-dir'}.'/read';
-    # где находятся картинки относительно readdir
+	# read-dir - где находятся готовые файлы для чтения человеком
+	$self->{'read-dir'} ||= $self->{'config-dir'}.'/read';
+    # где находятся картинки относительно read-dir
     $self->{'imgdir'} ||= 'img';
 
 	# encoding - кодировка выходных файлов

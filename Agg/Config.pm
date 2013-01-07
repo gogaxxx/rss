@@ -53,8 +53,8 @@ sub get_config_by_id {
 
 	my $self = $class->get_global_config();
 
-	$self->{'config-dir'} = CONFIG_DIR.'/'.$id;
-	my $config_filename = $self->{'config-dir'}.'/config';
+	$self->{'feed-dir'} = CONFIG_DIR.'/'.$id;
+	my $config_filename = $self->{'feed-dir'}.'/config';
     $self->read_file($config_filename);
 
     # считываем конфигурируемые пользователем поля из файла
@@ -69,19 +69,19 @@ sub get_config_by_id {
     # формируем поля по-умолчанию
     $self->{name} ||= $id; # гарантировано уникальное, лол
 
-	# кеш - где хранятся скачанные rss
-	$self->{cache} ||= $self->{'config-dir'}.'/cache';
+	# кеш - где хранятся скачанные rss # XXX cache-dir
+	$self->{cache} ||= $self->{'feed-dir'}.'/cache';
 
 	# где хранятся готовые итемы
-	$self->{items_dir} ||= $self->{'config-dir'}.'/items';
+	$self->{items_dir} ||= $self->{'feed-dir'}.'/items';
 
 	# master - указатель для итемов, в нём содержатся данные по итемам,
 	# такие как время и гуид
-	$self->{master} ||= $self->{'config-dir'}.'/master';
+	$self->{master} ||= $self->{'feed-dir'}.'/master';
 
 	# news - указатель аналогичный master но там содержатся не все
 	# итемы, а только новые со времени последнего запуска
-	$self->{'news'} ||= $self->{'config-dir'}.'/news';
+	$self->{'news'} ||= $self->{'feed-dir'}.'/news';
 
 	return $self;
 }

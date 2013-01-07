@@ -38,7 +38,7 @@ sub new {
 		cmd_tpl => \@cmd,
 		filepos => \@filepos,
 		urlpos	=> \@urlpos,
-		root	=> $cfg->{'cache-root'},
+		'cache-dir'	=> $cfg->{'cache-dir'},
 		cfg => $cfg}, $class;
 
 	return $self;
@@ -88,7 +88,7 @@ sub prepare {
 	my $dir1 = substr($hash, 0, 2);
 	my $dir2 = substr($hash, 2, 2);
 	my $filename = substr($hash, 4).$self->{'extension'};
-	my $dir = $self->{'root'}.'/'.$dir1.'/'.$dir2;
+	my $dir = $self->{'cache-dir'}.'/'.$dir1.'/'.$dir2;
 	$self->{'dir'} = $dir;
 
 	unless (-d $dir) {

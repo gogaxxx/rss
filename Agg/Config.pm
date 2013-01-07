@@ -69,8 +69,8 @@ sub get_config_by_id {
     # формируем поля по-умолчанию
     $self->{name} ||= $id; # гарантировано уникальное, лол
 
-	# кеш - где хранятся скачанные rss # XXX cache-dir
-	$self->{cache} ||= $self->{'feed-dir'}.'/cache';
+	# кеш - где хранятся скачанные rss
+	$self->{'cache-dir'} ||= $self->{'feed-dir'}.'/cache';
 
 	# где хранятся готовые итемы
 	$self->{items_dir} ||= $self->{'feed-dir'}.'/items';

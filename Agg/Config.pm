@@ -8,6 +8,7 @@ use Encode;
 use constant ROOT => '/home/nephrite/rss';
 use constant CONFIG_DIR => ROOT.'/config';
 use constant DEFAULT_ENCODING => 'utf-8';
+use constant DEBUG => 0;
 
 # name  - название ленты
 # type  - тип, например, atom или rss - используется для определения,
@@ -86,7 +87,7 @@ sub get_config_by_id {
 	return $self;
 }
 
-# #+++1 
+# read_file #+++1 
 sub read_file {
     my $self=shift;
     my $config_filename=shift;
@@ -95,12 +96,20 @@ sub read_file {
 		or die("Can't open $config_filename: $!");
 	my $enc_obj = Encode::find_encoding(DEFAULT_ENCODING); # XXX сделать
 															# определение кодировки
+	my $current_group = $self;
 	while(my $raw_line = <FILE>) {
 		chomp $raw_line;
 		my $line = $enc_obj->decode($raw_line);
 
 		$line =~ s/^\s+|\s+$//go;
 		next if ($line eq '' || substr($line, 0, 1) eq '#');
+
+		if ($line =~ /^\[([^\]]+)\]$/) {
+			my $group_name=$1;
+			warn "group_name=$group_name" if (DEBUG);
+			$current_group = $self->{$group_name} = {};
+			next;
+		}
 
 		my @pair = split(/\s*=\s*/, $line, 2);
 
@@ -109,7 +118,7 @@ sub read_file {
 		# подставляем переменные из вышестоящего конфига
         $pair[1] =~ s/\$SUPER/$self->{$pair[0]}/g;
 
-		$self->{$pair[0]} = $pair[1];
+		$current_group->{$pair[0]} = $pair[1];
 	}
 	close FILE;
 }

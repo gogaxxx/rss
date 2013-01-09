@@ -21,11 +21,9 @@ my $start   = $cfg->{start};
 while(1) {
 	my $full_path = get_page_and_image($cfg, $chapter, $page, 'want-feedback');
 
-	my $fchapter = sprintf('%.4d', $chapter);
-	my $fpage    = sprintf('%.5d', $page);
-	my $filename = gsprintf($tfile, 
-					chapter => $fchapter,
-					page => $fpage);
+	my $filename = gsprintf($tfile,
+						chapter =>sprintf('%.4d', $chapter),
+						page =>sprintf('%.5d', $page));
 	#print "filename=$filename\n";
 	
 	my $res_name = $imgdir.'/'.$filename;
@@ -89,8 +87,10 @@ sub get_page_and_image {
 	warn "regexp=$regexp" if (DEBUG);
 
 	warn "tpurl = ".$cfg->{tpurl} if (DEBUG);
-	my $page_url = gsprintf($cfg->{tpurl}, composed => $start+$chapter,
-							chapter => $chapter, page => $page);
+	my $page_url = gsprintf($cfg->{tpurl},
+					composed => $start+$chapter,
+					chapter => $chapter,
+					page => $page);
 	warn "page_url[2] = $page_url" if (DEBUG);
 	my $content = $downloader->fetch_cached($page_url);
 
@@ -118,6 +118,18 @@ sub tag_start {
 	}
 }
 
+# gsprintf #+++1
+sub gsprintf {
+	my ($fmt, %params)=@_;
+
+	my $str = $fmt;
+	while (my ($k, $v) = each %params) {
+		$str =~ s/\%$k\%/$v/g;
+	}
+	return $str;
+}
+
+# REAPER #+++1
 sub REAPER {
 	wait();
 	$SIG{CHLD}=\&REAPER;

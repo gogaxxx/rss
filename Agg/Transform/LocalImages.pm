@@ -39,7 +39,7 @@ sub new {
 	}
 
     $self->{'imgurl'} = $cfg->{'imgdir'};
-    $self->{'imgdir'} = $cfg->{'readdir'}.'/'.$cfg->{'imgdir'};
+    $self->{'imgdir'} = $cfg->{'read-dir'}.'/'.$cfg->{'imgdir'};
     mkdir($self->{'imgdir'}); # fail silently
 
     return $self;

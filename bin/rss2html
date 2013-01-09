@@ -69,7 +69,7 @@ B<t>o time - load items newer than specified date
 	}
 	close INDEX;
 
-	my $outfile = $cfg->{'readdir'}.'/'
+	my $outfile = $cfg->{'read-dir'}.'/'
 		.$cfg->{'name'}
 		.strftime('-%Y-%m-%d-%H%M%S', localtime())
 		.'.html';

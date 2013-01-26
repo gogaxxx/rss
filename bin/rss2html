@@ -85,7 +85,7 @@ B<t>o time - load items newer than specified date
 		open(OUT, '>'.$outfile) || die("Can't open $outfile: $!");
 		print OUT '<html><head><title>';
 		print OUT Encode::encode($enc, $cfg->{name});
-		print OUT '</title></head><body>';
+		print OUT '</title></head><body bgcolor=white>';
 		
 		for my $i (@master) {
 			my $item = $itemizer->load_item($i->[1]);

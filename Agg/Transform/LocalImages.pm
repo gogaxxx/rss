@@ -38,7 +38,9 @@ sub new {
 		$self->{host} = $1;
 	}
 
-    $self->{'imgurl'} = $cfg->{'imgdir'};
+    $self->{'imgurl'} = $cfg->{'imgdir'} 
+							? $cfg->{'imgdir'}.'/'
+							: '';
     $self->{'imgdir'} = $cfg->{'read-dir'}.'/'.$cfg->{'imgdir'};
     mkdir($self->{'imgdir'}); # fail silently
 
@@ -57,8 +59,8 @@ sub transform_item {
 	$parser->parse($item->{body});
     $parser->eof();
 	$item->{body} = $parser->{OUTPUT};
-	$item->{'used-images'} = join(',', 
-		keys %{$parser->{'used-images'}});
+	$item->{'used-images'} = [
+		keys %{$parser->{'used-images'}}];
 
     return $item;
 }
@@ -80,12 +82,12 @@ sub load_img {
     my $url = $attr->{src};
 	my $loader = $self->{transformer}{loader};
 	$loader->cache($url);
-	my $filename = $loader->{'hash'};
+	my $filename = $loader->{'hash'}.$loader->{'extension'};
     my $full_path =
         $self->{transformer}{'imgdir'}.'/'.$filename;
 	copy($loader->full_path, $full_path);
 
-	$attr->{src} = $self->{'transformer'}{'imgurl'}.'/'.$filename;
+	$attr->{src} = $self->{'transformer'}{'imgurl'}.$filename;
 	my $text = '<img '.
 		join(' ', map {$_.'="'.$attr->{$_}.'"'} keys %$attr).'>';
 

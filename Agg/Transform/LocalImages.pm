@@ -78,6 +78,7 @@ sub load_img {
     my ($self, $attr) = @_;
 
     my $url = $attr->{src};
+	warn "[Agg::Download::load_img] url=$url" if (DEBUG);
 	my $loader = $self->{transformer}{loader};
 	$loader->cache($url);
 	my $filename = $loader->{'hash'};

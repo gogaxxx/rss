@@ -75,7 +75,7 @@ sub prepare {
 		$uri  = $2;
 	}
 
-	if ($uri =~ /(\.[^\.]+)$/) {
+	if ($uri =~ /(\.\w+)$/) {
 		$self->{'extension'} = $1;
 	}
 	else {
@@ -117,6 +117,7 @@ sub cache {
 	my $self=shift;
 	my $url = shift;
 
+warn "[Download::cache] url=$url" if (DEBUG);
 	$self->prepare($url);
 	my $filename = $self->{'full_path'};
 	if (!-e $filename) {

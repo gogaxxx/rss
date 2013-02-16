@@ -98,6 +98,7 @@ B<t>o time - load items newer than specified date
 				'<span class=link> Link:'
 				.q{<a href="}.$item->{'link'}.q{">}.$display_link.q{</a></span><br>};
 
+			print OUT (q{<div style="height:100%;">});
 			print OUT Encode::encode($enc, '<h1>'.$item->{subject}.'<br></h1>');
 			print OUT 
 				'<span class=date>['
@@ -106,7 +107,7 @@ B<t>o time - load items newer than specified date
 			print OUT $link_code;
 			print OUT Encode::encode($enc, '<div class=body>'.$item->{body}.'</div>');
 			print OUT $link_code;
-			print OUT "<hr>\n";
+			print OUT qq{<hr style="clear:both;"></div>\n};
 		}
 		print OUT '</body></html>';
 		close OUT;

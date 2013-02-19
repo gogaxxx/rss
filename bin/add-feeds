@@ -21,7 +21,8 @@ MAIN: {
     }
 
 	my $cfg = Agg::Config->get_global_config();
-	my $root = $cfg->{config_dir};
+	my $root = $cfg->{'config-dir'};
+	warn "root=$root";
 	my $parser = XML::Parser->new();
 	my $loader = Agg::Download->new($cfg);
 

@@ -11,7 +11,7 @@ user-agent=Mozilla/5.0
 # команда для скачивания
 download-command=curl -s -LR --url %url -o %file -z %file
 # где находится кеш
-cache-dir=/home/neprite/rss/cache
+cache-dir=/home/nephrite/rss/cache
 # нужно ли выдавать всякие информационные сообщения
 be_verbose=0
 # имя фида - также имя файла, по умолчанию совпадает с id

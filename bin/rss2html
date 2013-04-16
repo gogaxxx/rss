@@ -44,6 +44,9 @@ B<t>o time - load items newer than specified date
 	my $feed_id = $ARGV[0] || die("Specify feed id");
 
 	my $cfg = Agg::Config->get_config_by_id($feed_id);
+	if ($cfg->{disabled}) {
+		die("Disabled by user");
+	}
 
 	my $from_time = get_from_time($opts{'f'});
 	my $to_time   = get_to_time($opts{'t'});
